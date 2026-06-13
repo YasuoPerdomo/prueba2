@@ -1,4 +1,6 @@
 import { Dish, Sede } from "./types";
+import arrozMariscos from "./assets/images/arroz_mariscos_1781339688351.jpg";
+import causaAcevichada from "./assets/images/causa_acevichada_1781341093495.jpg";
 
 export const SEDES: Sede[] = [
   {
@@ -93,7 +95,7 @@ export const DISHES: Dish[] = [
     description: "Cremosa masa de papa al ají amarillo, rellena de láminas de palta y mayonesa. Coronada con su cevichazo premium bañado en salsa de ají amarillo.",
     category: "entradas",
     isRecommended: true,
-    image: "https://images.unsplash.com/photo-1626132647523-66f5bf380027?auto=format&fit=crop&w=600&q=80",
+    image: causaAcevichada,
     badge: "Recomendado"
   },
   {
@@ -184,7 +186,7 @@ export const DISHES: Dish[] = [
     description: "Cremosa preparación al wok con abundante mistura de mariscos seleccionados, ají panca, vino blanco y un toque sutil de queso parmesano. Servido con zarza criolla.",
     category: "fondos",
     isRecommended: true,
-    image: "https://images.unsplash.com/photo-1626853501548-24d19bdee1a4?auto=format&fit=crop&w=600&q=80",
+    image: arrozMariscos,
     badge: "Recomendado"
   },
   {

@@ -2,6 +2,9 @@ import React, { useState, useEffect } from "react";
 import { motion, AnimatePresence } from "motion/react";
 import { Sede, Dish, CartItem } from "./types";
 import { SEDES, DISHES } from "./data";
+import heroCeviche from "./assets/images/hero_ceviche_1781339366808.jpg";
+import arrozMariscos from "./assets/images/arroz_mariscos_1781339688351.jpg";
+import causaAcevichada from "./assets/images/causa_acevichada_1781341093495.jpg";
 
 // Components
 import Navbar from "./components/Navbar";
@@ -34,21 +37,6 @@ export default function App() {
   const [searchQuery, setSearchQuery] = useState("");
   const [activeCategory, setActiveCategory] = useState("todos");
   const [toasts, setToasts] = useState<{ id: string; text: string; type: "success" | "info" | "warning" }[]>([]);
-  const [heroImageIdx, setHeroImageIdx] = useState(0);
-
-  // Auto carousel rotation
-  const carouselImages = [
-    "https://images.unsplash.com/photo-1534080391025-a87bdf19d26f?auto=format&fit=crop&w=1200&q=80",
-    "https://images.unsplash.com/photo-1625938146369-adc83368bda7?auto=format&fit=crop&w=1200&q=80",
-    "https://images.unsplash.com/photo-1626853501548-24d19bdee1a4?auto=format&fit=crop&w=1200&q=80"
-  ];
-
-  useEffect(() => {
-    const interval = setInterval(() => {
-      setHeroImageIdx(prev => (prev + 1) % carouselImages.length);
-    }, 4000);
-    return () => clearInterval(interval);
-  }, []);
 
   // Display Toast Helper
   const showToast = (text: string, type: "success" | "info" | "warning" = "success") => {
@@ -150,9 +138,9 @@ export default function App() {
                 <div className="absolute inset-0 z-0">
                   <div className="absolute inset-0 bg-gradient-to-r from-ocean-deep/95 via-ocean-deep/70 to-ocean-deep/45 z-10 mix-blend-multiply" />
                   <img
-                    src={carouselImages[heroImageIdx]}
+                    src={heroCeviche}
                     alt="Cevichería Terminal Pesquero"
-                    className="w-full h-full object-cover bg-center transition-all duration-1000 transform scale-102"
+                    className="w-full h-full object-cover bg-center"
                   />
                 </div>
 
@@ -246,7 +234,7 @@ export default function App() {
                   <div className="md:col-span-8 relative group rounded-2xl overflow-hidden shadow-sm hover:shadow-lg transition-all duration-500 bg-white">
                     <div className="absolute inset-0 bg-gradient-to-t from-ocean-deep/90 via-ocean-deep/30 to-transparent z-10" />
                     <img
-                      src="https://images.unsplash.com/photo-1626853501548-24d19bdee1a4?auto=format&fit=crop&w=1000&q=80"
+                      src={arrozMariscos}
                       alt="Arroz con Mariscos"
                       className="w-full h-full object-cover group-hover:scale-102 transition-transform duration-700"
                     />
@@ -277,30 +265,32 @@ export default function App() {
                     </div>
                   </div>
 
-                  {/* Featured element 2: Causa Acevichada with play indicators */}
-                  <div className="md:col-span-4 relative group rounded-2xl overflow-hidden shadow-sm hover:shadow-lg transition-all duration-500 bg-white flex flex-col justify-end">
-                    <div className="absolute inset-0 bg-gradient-to-t from-ocean-deep/95 via-ocean-deep/40 to-transparent z-10" />
-                    <img
-                      src="https://images.unsplash.com/photo-1626132647523-66f5bf380027?auto=format&fit=crop&w=600&q=80"
-                      alt="Causa Acevichada"
-                      className="absolute inset-0 w-full h-full object-cover group-hover:scale-105 transition-transform duration-700"
-                    />
-                    <div className="absolute top-4 right-4 bg-black/40 backdrop-blur-sm p-2 rounded-full z-20 text-white flex items-center justify-center">
-                      <span className="material-symbols-outlined text-lg animate-pulse">play_circle</span>
+                  {/* Featured element 2: Causa Acevichada */}
+                  <div className="md:col-span-4 relative group rounded-2xl overflow-hidden shadow-sm hover:shadow-lg transition-all duration-500 bg-white flex flex-col justify-end min-h-[320px]">
+                    <div className="absolute inset-0 z-0">
+                      <img
+                        src={causaAcevichada}
+                        alt="Causa Acevichada del Terminal"
+                        referrerPolicy="no-referrer"
+                        className="w-full h-full object-cover transition-transform duration-700 group-hover:scale-105"
+                      />
                     </div>
+                    
+                    {/* Gradient Overlay for legibility */}
+                    <div className="absolute inset-0 bg-gradient-to-t from-ocean-deep/95 via-ocean-deep/30 to-transparent z-10 pointer-events-none" />
                     
                     <div className="relative z-20 p-6 text-left">
                       <span className="bg-wave-blue text-ocean-deep px-3 py-1 rounded-full text-[10px] font-bold uppercase tracking-wider block w-max mb-2">
-                        Entrada Potente
+                        Entrada Potente (La Firma ⭐)
                       </span>
                       <h3 className="font-display text-xl sm:text-2xl font-extrabold text-white mb-1.5">
                         Causa Acevichada
                       </h3>
                       <p className="text-xs text-gray-200 mb-4 line-clamp-3 leading-relaxed font-medium">
-                        Cremoso pure de papa con ají amarillo limeño, relleno de láminas de palta suave, coronada con un generoso ceviche clásico de harto juego.
+                        Cremoso puré de papa con ají amarillo limeño, relleno de láminas de palta suave, coronada con un generoso ceviche clásico de harto jugo y chicharrón crujiente.
                       </p>
                       <div className="flex justify-between items-center">
-                        <span className="font-display font-black text-base text-sunset-coral">
+                        <span className="font-display font-black text-base text-sunset-coral font-bold">
                           S/ 39.90
                         </span>
                         <button
