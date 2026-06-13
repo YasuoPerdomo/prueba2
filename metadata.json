@@ -1,0 +1,6 @@
+{
+  "name": "Terminal Pesquero",
+  "description": "Página web interactiva y sistema de pedidos para la cevichería peruana Terminal Pesquero.",
+  "requestFramePermissions": [],
+  "majorCapabilities": ["MAJOR_CAPABILITY_SERVER_SIDE_GEMINI_API"]
+}

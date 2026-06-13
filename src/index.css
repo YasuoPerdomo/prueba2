@@ -1,0 +1,48 @@
+@import "tailwindcss";
+
+@theme {
+  --color-ocean-deep: #16448D;
+  --color-coastal-teal: #2BB7CC;
+  --color-sunset-coral: #EFA351;
+  --color-wave-blue: #B1E3EE;
+  --color-shell-pink: #F2CED8;
+  --color-sand-mist: #F9F6F2;
+  --color-whatsapp-green: #25D366;
+  
+  --font-display: "Vollkorn", serif;
+  --font-sans: "Hanken Grotesk", sans-serif;
+}
+
+@layer utilities {
+  .hero-pattern {
+    background-image: radial-gradient(#B1E3EE 1px, transparent 1px);
+    background-size: 20px 20px;
+    opacity: 0.15;
+  }
+
+  .glass-card {
+    background: rgba(252, 249, 245, 0.9);
+    backdrop-filter: blur(8px);
+    -webkit-backdrop-filter: blur(8px);
+    border: 1px solid rgba(22, 68, 141, 0.1);
+  }
+
+  .sticky-nav::-webkit-scrollbar {
+    display: none;
+  }
+  .sticky-nav {
+    -ms-overflow-style: none; /* IE and Edge */
+    scrollbar-width: none; /* Firefox */
+  }
+
+  /* Float animation */
+  @keyframes float {
+    0% { transform: translateY(0px); }
+    50% { transform: translateY(-10px); }
+    100% { transform: translateY(0px); }
+  }
+  
+  .animate-float {
+    animation: float 4s ease-in-out infinite;
+  }
+}

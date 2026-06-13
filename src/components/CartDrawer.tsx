@@ -1,0 +1,285 @@
+import React, { useState, useEffect } from "react";
+import { motion, AnimatePresence } from "motion/react";
+import { CartItem, Sede } from "../types";
+
+interface CartDrawerProps {
+  isOpen: boolean;
+  onClose: () => void;
+  cart: CartItem[];
+  onUpdateQuantity: (dishId: string, quantity: number) => void;
+  onRemoveItem: (dishId: string) => void;
+  sede: Sede | null;
+}
+
+export default function CartDrawer({
+  isOpen,
+  onClose,
+  cart,
+  onUpdateQuantity,
+  onRemoveItem,
+  sede,
+}: CartDrawerProps) {
+  const [customerName, setCustomerName] = useState("");
+  const [customerAddress, setCustomerAddress] = useState("");
+
+  // Calculate order totals
+  const totalItems = cart.reduce((acc, item) => acc + item.quantity, 0);
+  const totalPrice = cart.reduce((acc, item) => acc + item.dish.price * item.quantity, 0);
+
+  // Auto scroll to lock body scroll when open
+  useEffect(() => {
+    if (isOpen) {
+      document.body.style.overflow = "hidden";
+    } else {
+      document.body.style.overflow = "unset";
+    }
+    return () => {
+      document.body.style.overflow = "unset";
+    };
+  }, [isOpen]);
+
+  const handleSendOrder = () => {
+    if (!sede) {
+      alert("Error: Primero elige tu sede.");
+      return;
+    }
+
+    if (!customerName.trim() || !customerAddress.trim()) {
+      alert("Por favor, ingresa tu Nombre y Dirección de Entrega antes de enviar.");
+      return;
+    }
+
+    if (cart.length === 0) {
+      alert("Tu carrito está vacío. ¡Agrega un cevichazo u otro plato delicioso!");
+      return;
+    }
+
+    // Compose custom, clean, stylized message that delights the owners
+    let message = `*NUEVO PEDIDO - TERMINAL PESQUERO* 🌊🐟\n\n`;
+    message += `👤 *Cliente:* ${customerName.trim()}\n`;
+    message += `🏬 *Sede de Despacho:* ${sede.name}\n`;
+    message += `📍 *Dirección de Entrega:* ${customerAddress.trim()}\n`;
+    message += `------------------------------------------\n`;
+
+    cart.forEach(item => {
+      const itemCost = item.dish.price * item.quantity;
+      message += `▪️ ${item.quantity}x _${item.dish.name}_ (S/ ${itemCost.toFixed(2)})\n`;
+    });
+
+    message += `------------------------------------------\n`;
+    message += `💰 *TOTAL A PAGAR: S/ ${totalPrice.toFixed(2)}*\n\n`;
+    message += `¡Hola! Acabo de armar mi pedido desde la web para la sede *${sede.suffix}*. Quedo atento a la confirmación de cocina para el delivery. ¡Gracias! 🚀`;
+
+    const encodedText = encodeURIComponent(message);
+    const targetUrl = `https://api.whatsapp.com/send?phone=${sede.phone}&text=${encodedText}`;
+    window.open(targetUrl, "_blank");
+  };
+
+  return (
+    <AnimatePresence>
+      {isOpen && (
+        <>
+          {/* Backdrop Overlay */}
+          <motion.div
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            exit={{ opacity: 0 }}
+            onClick={onClose}
+            className="fixed inset-0 bg-black/60 z-[100] backdrop-blur-xs"
+          />
+
+          {/* Drawer Panel */}
+          <motion.div
+            initial={{ x: "100%" }}
+            animate={{ x: 0 }}
+            exit={{ x: "100%" }}
+            transition={{ type: "spring", damping: 25, stiffness: 220 }}
+            className="fixed top-0 right-0 h-full w-full sm:w-[440px] bg-white z-[110] shadow-2xl flex flex-col font-sans"
+          >
+            {/* Header */}
+            <div className="p-5 bg-gradient-to-r from-ocean-deep to-[#0b2752] text-white flex justify-between items-center shadow-md">
+              <div className="flex items-center gap-2">
+                <span className="material-symbols-outlined text-[26px]">shopping_cart</span>
+                <div className="text-left">
+                  <h2 className="font-display font-black text-xl tracking-tight">Tu Pedido</h2>
+                  <p className="text-[10px] text-wave-blue uppercase font-bold tracking-wider">
+                    Sabor de altamar garantizado
+                  </p>
+                </div>
+              </div>
+              <button
+                onClick={onClose}
+                className="p-1 px-2.5 rounded-full hover:bg-white/10 text-white hover:text-sunset-coral font-bold transition-all flex items-center justify-center cursor-pointer"
+              >
+                <span className="material-symbols-outlined">close</span>
+              </button>
+            </div>
+
+            {/* Display banner of the current dispatch branch */}
+            {sede && (
+              <div className="bg-wave-blue/20 px-5 py-2.5 border-b border-wave-blue/30 text-xs text-ocean-deep font-semibold flex items-center justify-between">
+                <div className="flex items-center gap-1.5">
+                  <span>{sede.emoji}</span>
+                  <span>Despacho: <b>{sede.suffix}</b></span>
+                </div>
+                <span className="text-[10px] bg-ocean-deep text-white py-0.5 px-2 rounded-full uppercase font-bold">
+                  LOCAL SELECCIONADO
+                </span>
+              </div>
+            )}
+
+            {/* Cart Items Container */}
+            <div className="flex-grow overflow-y-auto p-5 space-y-4">
+              {cart.length === 0 ? (
+                <div className="text-center py-16 text-gray-400 font-sans">
+                  <span className="material-symbols-outlined text-6xl text-wave-blue animate-bounce block mb-4">
+                    set_meal
+                  </span>
+                  <p className="font-bold text-gray-700 text-lg">Tu carrito está vacío.</p>
+                  <p className="text-xs max-w-[240px] mx-auto mt-2 leading-relaxed">
+                    ¡Cebichéate de una vez causa! Agrega unos sabrosos platos desde la carta.
+                  </p>
+                  <button
+                    onClick={onClose}
+                    className="mt-6 bg-ocean-deep text-white hover:bg-coastal-teal px-6 py-2.5 rounded-xl font-bold text-xs uppercase tracking-widest transition-all"
+                  >
+                    Ver la carta
+                  </button>
+                </div>
+              ) : (
+                <div className="space-y-3.5">
+                  <p className="text-xs font-bold text-gray-400 uppercase tracking-wider">
+                    Artículos Añadidos ({totalItems})
+                  </p>
+                  {cart.map(item => (
+                    <motion.div
+                      layout
+                      initial={{ opacity: 0, y: 10 }}
+                      animate={{ opacity: 1, y: 0 }}
+                      exit={{ opacity: 0, scale: 0.95 }}
+                      key={item.dish.id}
+                      className="flex items-center justify-between bg-gray-50 border border-gray-100 p-3 rounded-xl gap-3 shadow-none hover:shadow-xs transition-shadow"
+                    >
+                      {/* Product Thumbnail & Details */}
+                      <div className="w-16 h-16 rounded-lg overflow-hidden bg-gray-200 shrink-0 relative">
+                        <img
+                          src={item.dish.image}
+                          alt={item.dish.name}
+                          className="w-full h-full object-cover"
+                          onError={(e) => {
+                            (e.target as HTMLImageElement).src =
+                              "https://images.unsplash.com/photo-1546069901-ba9599a7e63c?auto=format&fit=crop&w=150&q=80";
+                          }}
+                        />
+                      </div>
+
+                      <div className="flex-grow min-w-0">
+                        <h4 className="font-bold text-sm text-ocean-deep truncate leading-tight">
+                          {item.dish.name}
+                        </h4>
+                        <span className="text-xs font-bold text-sunset-coral block mt-1">
+                          S/ {(item.dish.price * item.quantity).toFixed(2)}
+                        </span>
+                      </div>
+
+                      {/* Controls Area */}
+                      <div className="flex items-center gap-2">
+                        {/* +/- Counters */}
+                        <div className="flex items-center bg-white border border-gray-200 rounded-lg shadow-2xs">
+                          <button
+                            onClick={() => onUpdateQuantity(item.dish.id, item.quantity - 1)}
+                            className="px-2 py-1 text-ocean-deep hover:bg-gray-100 font-extrabold text-sm transition-colors rounded-l-lg cursor-pointer"
+                          >
+                            -
+                          </button>
+                          <span className="px-2 text-xs font-bold text-gray-700 min-w-[20px] text-center">
+                            {item.quantity}
+                          </span>
+                          <button
+                            onClick={() => onUpdateQuantity(item.dish.id, item.quantity + 1)}
+                            className="px-2 py-1 text-ocean-deep hover:bg-gray-100 font-extrabold text-sm transition-colors rounded-r-lg cursor-pointer"
+                          >
+                            +
+                          </button>
+                        </div>
+
+                        {/* Delete button */}
+                        <button
+                          onClick={() => onRemoveItem(item.dish.id)}
+                          className="text-red-500 hover:text-red-700 p-1.5 hover:bg-red-50 rounded-lg transition-colors flex items-center justify-center shrink-0 cursor-pointer"
+                          title="Eliminar del pedido"
+                        >
+                          <span className="material-symbols-outlined text-[19px]">delete</span>
+                        </button>
+                      </div>
+                    </motion.div>
+                  ))}
+                </div>
+              )}
+            </div>
+
+            {/* Delivery Form Controls & Summary */}
+            <div className="p-5 border-t border-gray-100 bg-gray-50 space-y-3.5 shrink-0">
+              {cart.length > 0 && (
+                <>
+                  <div className="space-y-2.5">
+                    {/* Customer Name */}
+                    <div>
+                      <label className="block text-[11px] font-bold text-ocean-deep uppercase tracking-widest mb-1.5">
+                        Nombre de quien recibe:
+                      </label>
+                      <input
+                        type="text"
+                        value={customerName}
+                        onChange={(e) => setCustomerName(e.target.value)}
+                        placeholder="Ej. Carlos Mendoza"
+                        className="w-full px-3.5 py-2.5 bg-white border border-gray-200 rounded-xl text-sm focus:outline-none focus:border-coastal-teal focus:ring-2 focus:ring-coastal-teal/10 font-medium placeholder-gray-400 shadow-3xs"
+                      />
+                    </div>
+
+                    {/* Destination Address */}
+                    <div>
+                      <label className="block text-[11px] font-bold text-ocean-deep uppercase tracking-widest mb-1.5">
+                        Dirección de entrega:
+                      </label>
+                      <input
+                        type="text"
+                        value={customerAddress}
+                        onChange={(e) => setCustomerAddress(e.target.value)}
+                        placeholder="Ej. Av. Larco 123, Dpto. 402 - Miraflores"
+                        className="w-full px-3.5 py-2.5 bg-white border border-gray-200 rounded-xl text-sm focus:outline-none focus:border-coastal-teal focus:ring-2 focus:ring-coastal-teal/10 font-medium placeholder-gray-400 shadow-3xs"
+                      />
+                    </div>
+                  </div>
+
+                  <div className="pt-3 border-t border-dashed border-gray-200 space-y-3 mt-1.5">
+                    <div className="flex justify-between items-center">
+                      <span className="font-bold text-sm text-ocean-deep uppercase tracking-wider">
+                        Total de la Orden:
+                      </span>
+                      <span className="font-display text-2xl font-black text-sunset-coral tracking-tight">
+                        S/ {totalPrice.toFixed(2)}
+                      </span>
+                    </div>
+
+                    <button
+                      onClick={handleSendOrder}
+                      className="w-full bg-whatsapp-green hover:brightness-95 text-white font-bold py-3.5 rounded-xl uppercase tracking-wider text-xs flex items-center justify-center gap-2 shadow-lg transition-all active:scale-[0.99] cursor-pointer"
+                    >
+                      <span className="material-symbols-outlined font-bold text-base">chat</span>
+                      Enviar Pedido por WhatsApp
+                    </button>
+                    
+                    <p className="text-[10px] text-gray-400 text-center leading-normal font-medium max-w-xs mx-auto">
+                      * Al enviar, se solicitará confirmación en la aplicación de WhatsApp de tu dispositivo.
+                    </p>
+                  </div>
+                </>
+              )}
+            </div>
+          </motion.div>
+        </>
+      )}
+    </AnimatePresence>
+  );
+}
