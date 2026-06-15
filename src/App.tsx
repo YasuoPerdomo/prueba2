@@ -5,6 +5,8 @@ import { SEDES, DISHES } from "./data";
 import heroCeviche from "./assets/images/hero_ceviche_1781339366808.jpg";
 import arrozMariscos from "./assets/images/arroz_mariscos_1781339688351.jpg";
 import causaAcevichada from "./assets/images/causa_acevichada_1781341093495.jpg";
+import chicharronPescado from "./assets/images/chicharron_pescado_1781563544480.jpg";
+import equipoSalon from "./assets/images/equipo_salon_1781563781348.jpg";
 
 // Components
 import Navbar from "./components/Navbar";
@@ -38,6 +40,34 @@ export default function App() {
   const [activeCategory, setActiveCategory] = useState("todos");
   const [toasts, setToasts] = useState<{ id: string; text: string; type: "success" | "info" | "warning" }[]>([]);
 
+  // Check if restaurant is closed based on current local device time
+  const checkIfClosed = (): boolean => {
+    const now = new Date();
+    const day = now.getDay(); // 0 = Sunday, 1 = Monday, ..., 6 = Saturday
+    const hours = now.getHours();
+    const minutes = now.getMinutes();
+    const currentTimeInMinutes = hours * 60 + minutes;
+
+    // Lunes a Jueves: 12:00 PM a 4:30 PM (720 min a 990 min)
+    // Viernes a Domingo: 12:00 PM a 5:00 PM (720 min a 1020 min)
+    const isWeekend = day === 0 || day === 5 || day === 6; // Sun, Fri, Sat
+    
+    const openTime = 12 * 60; // 12:00 PM (720 min)
+    const closeTime = isWeekend ? (17 * 60) : (16 * 60 + 30); // 17:00 (1020 min) vs 16:30 (990 min)
+
+    return currentTimeInMinutes < openTime || currentTimeInMinutes >= closeTime;
+  };
+
+  const [isClosed, setIsClosed] = useState<boolean>(checkIfClosed());
+
+  useEffect(() => {
+    // Check every 10 seconds to keep it real-time
+    const interval = setInterval(() => {
+      setIsClosed(checkIfClosed());
+    }, 10000);
+    return () => clearInterval(interval);
+  }, []);
+
   // Display Toast Helper
   const showToast = (text: string, type: "success" | "info" | "warning" = "success") => {
     const id = `toast_${Date.now()}_${Math.random().toString(36).substring(2, 9)}`;
@@ -57,7 +87,7 @@ export default function App() {
   };
 
   // Cart operations
-  const handleAddToCart = (dish: Dish) => {
+  const handleAddToCart = (dish: Dish, spicyLevel: 'bajo' | 'medio' | 'alto' = 'medio') => {
     // Intercept with Sede selector first if not chosen
     if (!selectedSede) {
       setIsBranchModalOpen(true);
@@ -65,32 +95,32 @@ export default function App() {
     }
 
     setCart(prev => {
-      const existing = prev.find(item => item.dish.id === dish.id);
+      const existing = prev.find(item => item.dish.id === dish.id && item.spicyLevel === spicyLevel);
       if (existing) {
-        showToast(`Se aumentó cantidad de: ${dish.name} 🐟`);
+        showToast(`Se aumentó cantidad de: ${dish.name} (${spicyLevel.toUpperCase()}) 🐟`);
         return prev.map(item =>
-          item.dish.id === dish.id ? { ...item, quantity: item.quantity + 1 } : item
+          (item.dish.id === dish.id && item.spicyLevel === spicyLevel) ? { ...item, quantity: item.quantity + 1 } : item
         );
       }
-      showToast(`¡Excelente! ${dish.name} añadido al pedido 🛒`);
-      return [...prev, { dish, quantity: 1 }];
+      showToast(`¡Excelente! ${dish.name} (${spicyLevel.toUpperCase()}) añadido al pedido 🛒`);
+      return [...prev, { dish, quantity: 1, spicyLevel }];
     });
   };
 
-  const handleUpdateQuantity = (dishId: string, quantity: number) => {
+  const handleUpdateQuantity = (dishId: string, quantity: number, spicyLevel?: 'bajo' | 'medio' | 'alto') => {
     if (quantity <= 0) {
-      handleRemoveItem(dishId);
+      handleRemoveItem(dishId, spicyLevel);
       return;
     }
-    setCart(prev => prev.map(item => (item.dish.id === dishId ? { ...item, quantity } : item)));
+    setCart(prev => prev.map(item => ((item.dish.id === dishId && item.spicyLevel === spicyLevel) ? { ...item, quantity } : item)));
   };
 
-  const handleRemoveItem = (dishId: string) => {
-    const found = cart.find(item => item.dish.id === dishId);
+  const handleRemoveItem = (dishId: string, spicyLevel?: 'bajo' | 'medio' | 'alto') => {
+    const found = cart.find(item => item.dish.id === dishId && item.spicyLevel === spicyLevel);
     if (found) {
-      showToast(`Se retiró ${found.dish.name} del pedido`, "warning");
+      showToast(`Se retiró ${found.dish.name} (${(spicyLevel || 'medio').toUpperCase()}) del pedido`, "warning");
     }
-    setCart(prev => prev.filter(item => item.dish.id !== dishId));
+    setCart(prev => prev.filter(item => !(item.dish.id === dishId && item.spicyLevel === spicyLevel)));
   };
 
   // Filtering Menu
@@ -120,6 +150,7 @@ export default function App() {
         onToggleCart={() => setIsCartOpen(!isCartOpen)}
         sede={selectedSede}
         onChangeBranch={() => setIsBranchModalOpen(true)}
+        isClosed={isClosed}
       />
 
       <main className="flex-grow">
@@ -141,6 +172,7 @@ export default function App() {
                     src={heroCeviche}
                     alt="Cevichería Terminal Pesquero"
                     className="w-full h-full object-cover bg-center"
+                    loading="lazy"
                   />
                 </div>
 
@@ -237,6 +269,7 @@ export default function App() {
                       src={arrozMariscos}
                       alt="Arroz con Mariscos"
                       className="w-full h-full object-cover group-hover:scale-102 transition-transform duration-700"
+                      loading="lazy"
                     />
                     <div className="absolute bottom-0 left-0 p-6 md:p-8 z-20 w-full text-left">
                       <span className="bg-shell-pink text-ocean-deep px-3 py-1 rounded-full text-[10px] font-bold uppercase tracking-wider block w-max mb-3">
@@ -273,6 +306,7 @@ export default function App() {
                         alt="Causa Acevichada del Terminal"
                         referrerPolicy="no-referrer"
                         className="w-full h-full object-cover transition-transform duration-700 group-hover:scale-105"
+                        loading="lazy"
                       />
                     </div>
                     
@@ -310,9 +344,11 @@ export default function App() {
                   <div className="md:col-span-12 lg:col-span-6 relative group rounded-2xl overflow-hidden shadow-sm hover:shadow-lg transition-all duration-300 bg-white min-h-[340px] flex items-end">
                     <div className="absolute inset-0 bg-gradient-to-r from-ocean-deep/95 via-ocean-deep/60 to-transparent z-10" />
                     <img
-                      src="https://images.unsplash.com/photo-1565557623262-b51c2513a641?auto=format&fit=crop&w=800&q=80"
-                      alt="Chicharrón Mixto"
+                      src={chicharronPescado}
+                      alt="Chicharrón de Pescado"
+                      referrerPolicy="no-referrer"
                       className="absolute inset-0 w-full h-full object-cover object-right group-hover:scale-102 transition-transform duration-700"
+                      loading="lazy"
                     />
                     <div className="relative z-20 p-6 md:p-8 text-left max-w-md">
                       <h3 className="font-display text-2xl font-bold text-white mb-2">
@@ -451,9 +487,11 @@ export default function App() {
                     <div className="absolute inset-0 z-0">
                       <div className="absolute inset-0 bg-gradient-to-t from-ocean-deep via-ocean-deep/30 to-transparent z-10" />
                       <img
-                        src="https://images.unsplash.com/photo-1541532713592-79a0317b6b77?auto=format&fit=crop&w=600&q=80"
+                        src={equipoSalon}
                         alt="Equipo Terminal Pesquero"
+                        referrerPolicy="no-referrer"
                         className="w-full h-full object-cover transition-transform duration-700 group-hover:scale-102"
+                        loading="lazy"
                       />
                     </div>
 
@@ -535,6 +573,7 @@ export default function App() {
                     src="https://images.unsplash.com/photo-1546069901-ba9599a7e63c?auto=format&fit=crop&w=1200&q=80"
                     alt="Ceviche de conchas"
                     className="w-full h-full object-cover"
+                    loading="lazy"
                   />
                 </div>
                 <div className="relative z-10 text-center max-w-xl">
@@ -593,6 +632,8 @@ export default function App() {
                 </div>
               </div>
 
+
+
               {/* --- CARTA DISH GRID --- */}
               <div className="mt-8">
                 {filteredDishes.length === 0 ? (
@@ -607,6 +648,7 @@ export default function App() {
                         key={dish.id}
                         dish={dish}
                         onAddToCart={handleAddToCart}
+                        isClosed={isClosed}
                       />
                     ))}
                   </div>

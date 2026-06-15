@@ -8,6 +8,7 @@ interface NavbarProps {
   onToggleCart: () => void;
   sede: Sede | null;
   onChangeBranch: () => void;
+  isClosed?: boolean;
 }
 
 export default function Navbar({
@@ -17,6 +18,7 @@ export default function Navbar({
   onToggleCart,
   sede,
   onChangeBranch,
+  isClosed = false,
 }: NavbarProps) {
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
 
@@ -24,19 +26,34 @@ export default function Navbar({
     <nav className="w-full top-0 sticky z-50 bg-white/95 backdrop-blur-md shadow-sm border-b border-gray-100 transition-all duration-300">
       <div className="max-w-7xl mx-auto flex justify-between items-center px-4 md:px-8 py-3.5">
         
-        {/* Brand Logo */}
-        <button
-          onClick={() => {
-            onChangeTab("inicio");
-            window.scrollTo({ top: 0, behavior: "smooth" });
-          }}
-          className="font-display text-[26px] md:text-[32px] leading-tight text-ocean-deep tracking-tighter hover:opacity-90 transition-opacity flex flex-col text-left font-black"
-        >
-          <span>TERMINAL</span>
-          <span className="text-coastal-teal text-[16px] md:text-[18px] tracking-widest font-bold mt-[-6px]">
-            PESQUERO
-          </span>
-        </button>
+        {/* Brand Logo & Status */}
+        <div className="flex items-center gap-3">
+          <button
+            onClick={() => {
+              onChangeTab("inicio");
+              window.scrollTo({ top: 0, behavior: "smooth" });
+            }}
+            className="font-display text-[26px] md:text-[32px] leading-tight text-ocean-deep tracking-tighter hover:opacity-90 transition-opacity flex flex-col text-left font-black"
+          >
+            <span>TERMINAL</span>
+            <span className="text-coastal-teal text-[16px] md:text-[18px] tracking-widest font-bold mt-[-6px]">
+              PESQUERO
+            </span>
+          </button>
+
+          {/* Estado de Horario Pill */}
+          {isClosed ? (
+            <span className="inline-flex items-center gap-1 px-2 py-0.5 md:px-2.5 md:py-1 text-[9px] md:text-[10px] font-black uppercase tracking-wider bg-red-50 text-red-600 border border-red-200 rounded-full shadow-2xs">
+              <span className="w-1.5 h-1.5 bg-red-600 rounded-full animate-bounce" />
+              Cerrado
+            </span>
+          ) : (
+            <span className="inline-flex items-center gap-1 px-2 py-0.5 md:px-2.5 md:py-1 text-[9px] md:text-[10px] font-black uppercase tracking-wider bg-emerald-50 text-emerald-600 border border-emerald-200 rounded-full shadow-2xs">
+              <span className="w-1.5 h-1.5 bg-emerald-500 rounded-full animate-pulse" />
+              Abierto
+            </span>
+          )}
+        </div>
 
         {/* Desktop Nav Routing */}
         <div className="hidden md:flex space-x-8 items-center font-sans">

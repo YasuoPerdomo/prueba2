@@ -10,11 +10,14 @@ export interface Dish {
   isDuo?: boolean;
   image: string;
   badge?: string;
+  noSpicy?: boolean;
+  alergenos?: string[];
 }
 
 export interface CartItem {
   dish: Dish;
   quantity: number;
+  spicyLevel?: 'bajo' | 'medio' | 'alto';
 }
 
 export interface Sede {

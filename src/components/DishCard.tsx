@@ -1,13 +1,16 @@
-import React from "react";
+import React, { useState } from "react";
 import { Dish } from "../types";
 
 interface DishCardProps {
   key?: string;
   dish: Dish;
-  onAddToCart: (dish: Dish) => void;
+  onAddToCart: (dish: Dish, spicyLevel?: 'bajo' | 'medio' | 'alto') => void;
+  isClosed?: boolean;
 }
 
-export default function DishCard({ dish, onAddToCart }: DishCardProps) {
+export default function DishCard({ dish, onAddToCart, isClosed = false }: DishCardProps) {
+  const [spicyLevel, setSpicyLevel] = useState<'bajo' | 'medio' | 'alto'>('medio');
+
   // Co-generate colorful badges based on type or explicit label
   const getBadgeStyles = () => {
     if (dish.badge === "Recomendado" || dish.isRecommended) {
@@ -73,14 +76,70 @@ export default function DishCard({ dish, onAddToCart }: DishCardProps) {
           </p>
         </div>
 
+        {/* Nivel de Picante Selector */}
+        {!dish.noSpicy && dish.category !== "postres" ? (
+          <div className="mb-4">
+            <div className="flex items-center gap-1 mb-2">
+              <span className="text-[11px] font-bold text-ocean-deep uppercase tracking-wider block">
+                🌶️ Término Ají:
+              </span>
+              <span className={`text-[10px] font-bold uppercase px-2 py-0.5 rounded-md ${
+                spicyLevel === 'bajo' 
+                  ? 'bg-amber-100 text-amber-700' 
+                  : spicyLevel === 'medio' 
+                  ? 'bg-orange-100 text-orange-700' 
+                  : 'bg-red-100 text-red-700'
+              }`}>
+                {spicyLevel}
+              </span>
+            </div>
+            <div className="grid grid-cols-3 gap-1 bg-gray-100 p-1 rounded-xl">
+              {(['bajo', 'medio', 'alto'] as const).map((level) => {
+                const isActive = spicyLevel === level;
+                return (
+                  <button
+                    key={level}
+                    type="button"
+                    onClick={() => setSpicyLevel(level)}
+                    className={`py-1.5 px-1.5 rounded-lg text-[10px] font-extrabold uppercase transition-all duration-200 select-none cursor-pointer ${
+                      isActive
+                        ? level === 'bajo'
+                          ? 'bg-amber-400 text-ocean-deep shadow-xs'
+                          : level === 'medio'
+                          ? 'bg-[#EFA351] text-white shadow-xs'
+                          : 'bg-rose-600 text-white shadow-xs'
+                        : 'text-gray-500 hover:text-ocean-deep hover:bg-gray-50'
+                    }`}
+                  >
+                    {level}
+                  </button>
+                );
+              })}
+            </div>
+          </div>
+        ) : (
+          <div className="h-4" />
+        )}
+
         {/* Actions Row */}
         <div className="pt-3 border-t border-gray-50 shrink-0">
           <button
-            onClick={() => onAddToCart(dish)}
-            className="w-full py-2.5 bg-white border-2 border-ocean-deep text-ocean-deep hover:bg-ocean-deep hover:text-white font-bold text-xs uppercase tracking-wider rounded-xl transition-all flex items-center justify-center gap-1.5 cursor-pointer active:scale-98"
+            disabled={isClosed}
+            onClick={() => {
+              if (isClosed) return;
+              const hasSpicy = !dish.noSpicy && dish.category !== "postres";
+              onAddToCart(dish, hasSpicy ? spicyLevel : undefined);
+            }}
+            className={`w-full py-2.5 font-bold text-xs uppercase tracking-wider rounded-xl transition-all flex items-center justify-center gap-1.5 active:scale-98 ${
+              isClosed
+                ? "bg-gray-100 border-2 border-gray-200 text-gray-400 cursor-not-allowed"
+                : "bg-white border-2 border-ocean-deep text-ocean-deep hover:bg-ocean-deep hover:text-white cursor-pointer"
+            }`}
           >
-            <span className="material-symbols-outlined text-[17px]">add_shopping_cart</span>
-            Añadir al pedido
+            <span className="material-symbols-outlined text-[17px]">
+              {isClosed ? "lock_clock" : "add_shopping_cart"}
+            </span>
+            {isClosed ? "Fuera de Horario" : "Añadir al pedido"}
           </button>
         </div>
       </div>

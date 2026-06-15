@@ -6,8 +6,8 @@ interface CartDrawerProps {
   isOpen: boolean;
   onClose: () => void;
   cart: CartItem[];
-  onUpdateQuantity: (dishId: string, quantity: number) => void;
-  onRemoveItem: (dishId: string) => void;
+  onUpdateQuantity: (dishId: string, quantity: number, spicyLevel?: 'bajo' | 'medio' | 'alto') => void;
+  onRemoveItem: (dishId: string, spicyLevel?: 'bajo' | 'medio' | 'alto') => void;
   sede: Sede | null;
 }
 
@@ -63,7 +63,8 @@ export default function CartDrawer({
 
     cart.forEach(item => {
       const itemCost = item.dish.price * item.quantity;
-      message += `▪️ ${item.quantity}x _${item.dish.name}_ (S/ ${itemCost.toFixed(2)})\n`;
+      const spicyText = item.spicyLevel ? ` [Picante: ${item.spicyLevel.toUpperCase()}]` : '';
+      message += `▪️ ${item.quantity}x _${item.dish.name}_${spicyText} (S/ ${itemCost.toFixed(2)})\n`;
     });
 
     message += `------------------------------------------\n`;
@@ -156,8 +157,7 @@ export default function CartDrawer({
                       layout
                       initial={{ opacity: 0, y: 10 }}
                       animate={{ opacity: 1, y: 0 }}
-                      exit={{ opacity: 0, scale: 0.95 }}
-                      key={item.dish.id}
+                      key={`${item.dish.id}_${item.spicyLevel || 'medio'}`}
                       className="flex items-center justify-between bg-gray-50 border border-gray-100 p-3 rounded-xl gap-3 shadow-none hover:shadow-xs transition-shadow"
                     >
                       {/* Product Thumbnail & Details */}
@@ -166,6 +166,7 @@ export default function CartDrawer({
                           src={item.dish.image}
                           alt={item.dish.name}
                           className="w-full h-full object-cover"
+                          loading="lazy"
                           onError={(e) => {
                             (e.target as HTMLImageElement).src =
                               "https://images.unsplash.com/photo-1546069901-ba9599a7e63c?auto=format&fit=crop&w=150&q=80";
@@ -177,6 +178,19 @@ export default function CartDrawer({
                         <h4 className="font-bold text-sm text-ocean-deep truncate leading-tight">
                           {item.dish.name}
                         </h4>
+                        <div className="flex flex-wrap gap-1 items-center mt-1">
+                          {item.spicyLevel && (
+                            <span className={`inline-flex items-center gap-0.5 text-[10px] uppercase font-semibold px-2 py-0.5 rounded-md ${
+                              item.spicyLevel === 'bajo' 
+                                ? 'bg-amber-50 text-amber-700 border border-amber-200' 
+                                : item.spicyLevel === 'medio' 
+                                ? 'bg-orange-50 text-orange-700 border border-orange-200' 
+                                : 'bg-red-50 text-red-700 border border-red-200'
+                            }`}>
+                              🌶️ {item.spicyLevel}
+                            </span>
+                          )}
+                        </div>
                         <span className="text-xs font-bold text-sunset-coral block mt-1">
                           S/ {(item.dish.price * item.quantity).toFixed(2)}
                         </span>
@@ -187,7 +201,7 @@ export default function CartDrawer({
                         {/* +/- Counters */}
                         <div className="flex items-center bg-white border border-gray-200 rounded-lg shadow-2xs">
                           <button
-                            onClick={() => onUpdateQuantity(item.dish.id, item.quantity - 1)}
+                            onClick={() => onUpdateQuantity(item.dish.id, item.quantity - 1, item.spicyLevel)}
                             className="px-2 py-1 text-ocean-deep hover:bg-gray-100 font-extrabold text-sm transition-colors rounded-l-lg cursor-pointer"
                           >
                             -
@@ -196,7 +210,7 @@ export default function CartDrawer({
                             {item.quantity}
                           </span>
                           <button
-                            onClick={() => onUpdateQuantity(item.dish.id, item.quantity + 1)}
+                            onClick={() => onUpdateQuantity(item.dish.id, item.quantity + 1, item.spicyLevel)}
                             className="px-2 py-1 text-ocean-deep hover:bg-gray-100 font-extrabold text-sm transition-colors rounded-r-lg cursor-pointer"
                           >
                             +
@@ -205,7 +219,7 @@ export default function CartDrawer({
 
                         {/* Delete button */}
                         <button
-                          onClick={() => onRemoveItem(item.dish.id)}
+                          onClick={() => onRemoveItem(item.dish.id, item.spicyLevel)}
                           className="text-red-500 hover:text-red-700 p-1.5 hover:bg-red-50 rounded-lg transition-colors flex items-center justify-center shrink-0 cursor-pointer"
                           title="Eliminar del pedido"
                         >
