@@ -77,7 +77,7 @@ export default function DishCard({ dish, onAddToCart, isClosed = false }: DishCa
         </div>
 
         {/* Nivel de Picante Selector */}
-        {!dish.noSpicy && dish.category !== "postres" ? (
+        {!dish.noSpicy && dish.category !== "postres" && dish.category !== "bebidas" ? (
           <div className="mb-4">
             <div className="flex items-center gap-1 mb-2">
               <span className="text-[11px] font-bold text-ocean-deep uppercase tracking-wider block">
@@ -127,7 +127,7 @@ export default function DishCard({ dish, onAddToCart, isClosed = false }: DishCa
             disabled={isClosed}
             onClick={() => {
               if (isClosed) return;
-              const hasSpicy = !dish.noSpicy && dish.category !== "postres";
+              const hasSpicy = !dish.noSpicy && dish.category !== "postres" && dish.category !== "bebidas";
               onAddToCart(dish, hasSpicy ? spicyLevel : undefined);
             }}
             className={`w-full py-2.5 font-bold text-xs uppercase tracking-wider rounded-xl transition-all flex items-center justify-center gap-1.5 active:scale-98 ${

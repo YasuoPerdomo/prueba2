@@ -58,6 +58,37 @@ export default function App() {
     return currentTimeInMinutes < openTime || currentTimeInMinutes >= closeTime;
   };
 
+  const getClosedReason = () => {
+    const now = new Date();
+    const day = now.getDay();
+    const hours = now.getHours();
+    const minutes = now.getMinutes();
+    const currentTimeInMinutes = hours * 60 + minutes;
+
+    const isWeekend = day === 0 || day === 5 || day === 6;
+    const openTime = 12 * 60; // 12:00 PM
+
+    const scheduleStr = "Lunes a Jueves de 12:00 PM a 4:30 PM & Viernes a Domingo de 12:00 PM a 5:00 PM";
+
+    if (currentTimeInMinutes < openTime) {
+      return {
+        title: "¡La cocina de Terminal Pesquero se está preparando!",
+        message: "Actualmente nos encontramos cerrados afinando el sabor y recibiendo la pesca del día más fresca del litoral.",
+        badge: "Cerrado temporalmente",
+        nextOpen: "Hoy a las 12:00 PM",
+        hours: scheduleStr
+      };
+    } else {
+      return {
+        title: "¡Hasta mañana, marinero! La cocina ha cerrado",
+        message: "Nuestra cocina cerró sus fuegos por hoy para garantizar que cada ingrediente servido sea de la máxima frescura del día. ¡Te esperamos mañana para deleitarte!",
+        badge: "Servicio finalizado por hoy",
+        nextOpen: "Mañana a las 12:00 PM",
+        hours: scheduleStr
+      };
+    }
+  };
+
   const [isClosed, setIsClosed] = useState<boolean>(checkIfClosed());
 
   useEffect(() => {
@@ -589,6 +620,59 @@ export default function App() {
                 </div>
               </header>
 
+              {/* --- CLOSED RESTAURANT BANNER --- */}
+              {isClosed && (() => {
+                const info = getClosedReason();
+                return (
+                  <motion.div
+                    initial={{ opacity: 0, y: -10 }}
+                    animate={{ opacity: 1, y: 0 }}
+                    className="mb-8 overflow-hidden rounded-2xl bg-amber-50/90 border-2 border-amber-200/70 shadow-xs"
+                  >
+                    <div className="flex flex-col md:flex-row items-stretch">
+                      {/* Left icon slice */}
+                      <div className="bg-gradient-to-br from-amber-500 to-amber-600 text-white px-6 py-6 md:py-0 flex flex-col items-center justify-center text-center shrink-0 w-full md:w-36 select-none">
+                        <span className="material-symbols-outlined text-[36px] font-bold animate-pulse">
+                          lock_clock
+                        </span>
+                        <span className="text-[9px] uppercase font-black tracking-widest mt-1.5 text-amber-100">
+                          Fuera de Horario
+                        </span>
+                      </div>
+                      
+                      {/* Reason / Details text */}
+                      <div className="p-5 flex-grow text-left">
+                        <div className="flex flex-wrap items-center gap-2 mb-2">
+                          <h2 className="text-base font-black text-amber-950 uppercase tracking-wide">
+                            {info.title}
+                          </h2>
+                          <span className="bg-amber-100 text-amber-900 border border-amber-300/30 text-[10px] font-black uppercase tracking-widest px-2.5 py-0.5 rounded-full">
+                            Apertura: {info.nextOpen}
+                          </span>
+                        </div>
+                        <p className="text-xs text-amber-900/90 font-medium leading-relaxed max-w-3xl">
+                          {info.message}
+                        </p>
+                        
+                        <div className="mt-4 pt-3 border-t border-amber-200/50 flex flex-wrap items-center justify-between gap-3 text-[11px] font-semibold text-amber-950/80">
+                          <div className="flex items-center gap-1.5">
+                            <span className="material-symbols-outlined text-sm text-amber-700">schedule</span>
+                            <span>Sede Delivery: <b className="text-amber-950">{info.hours}</b></span>
+                          </div>
+                          
+                          <div className="flex items-center gap-1">
+                            <span className="w-2 h-2 rounded-full bg-rose-500 animate-ping mr-1" />
+                            <span className="text-[10px] text-rose-700 font-extrabold uppercase tracking-wider">
+                              No se aceptan pedidos web en este momento
+                            </span>
+                          </div>
+                        </div>
+                      </div>
+                    </div>
+                  </motion.div>
+                );
+              })()}
+
               {/* --- CATEGORIES HORIZONTAL NAVIGATION --- */}
               <div className="sticky top-16 z-40 bg-[#F9F6F2]/95 backdrop-blur-md border-y border-gray-200/60 py-3.5 px-1 flex flex-col sm:flex-row gap-4 items-center justify-between shadow-xs select-none">
                 <div className="w-full sm:w-auto overflow-x-auto sticky-nav flex gap-2 whitespace-nowrap scroll-smooth pb-1 md:pb-0">
@@ -601,6 +685,7 @@ export default function App() {
                     { id: "menu-kids", label: "Para Peques" },
                     { id: "combos", label: "Combos" },
                     { id: "duos", label: "Dúos Power" },
+                    { id: "bebidas", label: "Bebidas" },
                     { id: "postres", label: "Postres" }
                   ].map(cat => (
                     <button
@@ -756,6 +841,7 @@ export default function App() {
         cart={cart}
         onUpdateQuantity={handleUpdateQuantity}
         onRemoveItem={handleRemoveItem}
+        onAddToCart={handleAddToCart}
         sede={selectedSede}
       />
 

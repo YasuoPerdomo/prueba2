@@ -449,6 +449,73 @@ export const DISHES: Dish[] = [
     alergenos: ["mariscos", "lacteos"]
   },
 
+  // --- Bebidas ---
+  {
+    id: "beb_agua_con_gas",
+    name: "Agua San Luis con Gas (350ml)",
+    price: 6.00,
+    description: "Agua de mesa gasificada de 350ml, ideal para acompañar tus ceviches con harto limón.",
+    category: "bebidas",
+    image: "https://images.unsplash.com/photo-1608885898957-947a50616b25?auto=format&fit=crop&w=600&q=80",
+    noSpicy: true
+  },
+  {
+    id: "beb_agua_sin_gas",
+    name: "Agua San Luis sin Gas (350ml)",
+    price: 6.00,
+    description: "Agua de mesa pura sin gas, fresca y ligera de 350ml para refrescar tu paladar.",
+    category: "bebidas",
+    image: "https://images.unsplash.com/photo-1548839140-29a749e1cf4d?auto=format&fit=crop&w=600&q=80",
+    noSpicy: true
+  },
+  {
+    id: "beb_coca_cola_regular",
+    name: "Coca-Cola Regular (300ml)",
+    price: 6.50,
+    description: "La gaseosa clásica helada de 300ml en original presentación de vidrio/lata para maridar tu sabroso plato.",
+    category: "bebidas",
+    image: "https://images.unsplash.com/photo-1622483767028-3f66f32aef97?auto=format&fit=crop&w=600&q=80",
+    noSpicy: true
+  },
+  {
+    id: "beb_coca_cola_zero",
+    name: "Coca-Cola Zero (300ml)",
+    price: 6.50,
+    description: "El inconfundible sabor refrescante de siempre, helada de receta Zero azúcar (300ml).",
+    category: "bebidas",
+    image: "https://images.unsplash.com/photo-1554866585-cd94860890b7?auto=format&fit=crop&w=600&q=80",
+    noSpicy: true
+  },
+  {
+    id: "beb_inka_cola_regular",
+    name: "Inka Kola Regular (300ml)",
+    price: 6.50,
+    description: "La compañera dorada indiscutible de nuestra gastronomía. Gaseosa nacional heladita de 300ml.",
+    category: "bebidas",
+    image: "https://images.unsplash.com/photo-1621263764928-df1444c5e859?auto=format&fit=crop&w=600&q=80",
+    noSpicy: true
+  },
+  {
+    id: "beb_inka_cola_zero",
+    name: "Inka Kola Zero (300ml)",
+    price: 6.50,
+    description: "El inconfundible sabor nacional en su balanceada versión Zero azúcar y calorías (300ml).",
+    category: "bebidas",
+    image: "https://images.unsplash.com/photo-1554866585-cd94860890b7?auto=format&fit=crop&w=600&q=80",
+    noSpicy: true
+  },
+  {
+    id: "beb_chicha_morada_1lt",
+    name: "Chicha Morada (1Lt)",
+    price: 18.90,
+    description: "Exquisita receta de chicha de la casa, hervida con maíz morado, piña, manzana clavo y canela. Botella de 1 litro.",
+    category: "bebidas",
+    image: "https://images.unsplash.com/photo-1513558161293-cdaf765ed2fd?auto=format&fit=crop&w=600&q=80",
+    isRecommended: true,
+    badge: "Casera",
+    noSpicy: true
+  },
+
   // --- Postres ---
   {
     id: "pos_chocolate",

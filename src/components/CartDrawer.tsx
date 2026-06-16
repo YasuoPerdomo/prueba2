@@ -1,6 +1,68 @@
 import React, { useState, useEffect } from "react";
 import { motion, AnimatePresence } from "motion/react";
-import { CartItem, Sede } from "../types";
+import { CartItem, Sede, Dish } from "../types";
+
+// Helper of available pre-configured suggested side-dishes, drinks, and desserts
+const SUGGESTED_ADDONS: Dish[] = [
+  {
+    id: "add_chicha_morada_vaso",
+    name: "Chicha Morada Heladita (Vaso)",
+    price: 8.50,
+    description: "Néctar casero de maíz morado, piña, manzana, canela, clavo de olor y gotas de limón norteño.",
+    category: "bebidas",
+    image: "https://images.unsplash.com/photo-1546069901-ba9599a7e63c?auto=format&fit=crop&w=300&q=80",
+    noSpicy: true,
+  },
+  {
+    id: "add_chicha_morada_jarra",
+    name: "Jarra de Chicha Morada (1L)",
+    price: 19.50,
+    description: "La jarra helada favorita del terminal, ideal para compartir en mesa salvaje.",
+    category: "bebidas",
+    image: "https://images.unsplash.com/photo-1513558161293-cdaf765ed2fd?auto=format&fit=crop&w=300&q=80",
+    noSpicy: true,
+  },
+  {
+    id: "pos_chocolate", // Matches standard ID for deep integration
+    name: "Torta de Chocolate Norteña",
+    price: 18.00,
+    description: "Clásica y húmeda torta de cacao puro peruano al 70%, con harto manjar blanco.",
+    category: "postres",
+    image: "https://images.unsplash.com/photo-1578985545062-69928b1d9587?auto=format&fit=crop&w=300&q=80",
+    noSpicy: true,
+  },
+  {
+    id: "pos_limon", // Matches standard ID for deep integration
+    name: "Pie de Limón Real",
+    price: 17.00,
+    description: "Crema cítrica premium de limón norteño sobre base crocante y merengue suizo.",
+    category: "postres",
+    image: "https://images.unsplash.com/photo-1519869325930-281384150729?auto=format&fit=crop&w=300&q=80",
+    noSpicy: true,
+  }
+];
+
+// Helper to determine delivery minutes per sede (25 to 30 min)
+const getSedeMinutes = (sedeId: string): number => {
+  switch (sedeId) {
+    case "begonias": return 25;
+    case "jesus_maria": return 28;
+    case "barranco": return 26;
+    case "chacarilla": return 29;
+    case "miraflores": return 25;
+    case "monterrico": return 30;
+    case "san_isidro": return 27;
+    case "punta_hermosa": return 30;
+    case "san_miguel": return 29;
+    default: return 25;
+  }
+};
+
+const formatTime = (seconds: number): string => {
+  const mins = Math.floor(seconds / 60);
+  const secs = seconds % 60;
+  return `${mins}:${secs < 10 ? "0" : ""}${secs} min`;
+};
 
 interface CartDrawerProps {
   isOpen: boolean;
@@ -8,6 +70,7 @@ interface CartDrawerProps {
   cart: CartItem[];
   onUpdateQuantity: (dishId: string, quantity: number, spicyLevel?: 'bajo' | 'medio' | 'alto') => void;
   onRemoveItem: (dishId: string, spicyLevel?: 'bajo' | 'medio' | 'alto') => void;
+  onAddToCart: (dish: Dish, spicyLevel?: 'bajo' | 'medio' | 'alto') => void;
   sede: Sede | null;
 }
 
@@ -17,10 +80,40 @@ export default function CartDrawer({
   cart,
   onUpdateQuantity,
   onRemoveItem,
+  onAddToCart,
   sede,
 }: CartDrawerProps) {
   const [customerName, setCustomerName] = useState("");
   const [customerAddress, setCustomerAddress] = useState("");
+
+  const [timeLeft, setTimeLeft] = useState<number>(() => {
+    if (!sede) return 25 * 60;
+    return getSedeMinutes(sede.id) * 60;
+  });
+
+  // Reset/set timer when sede changes
+  useEffect(() => {
+    if (sede) {
+      setTimeLeft(getSedeMinutes(sede.id) * 60);
+    }
+  }, [sede?.id]);
+
+  // Live ticking countdown when drawer is open
+  useEffect(() => {
+    if (!isOpen || timeLeft <= 0) return;
+
+    const interval = setInterval(() => {
+      setTimeLeft((prev) => {
+        if (prev <= 1) {
+          clearInterval(interval);
+          return 0;
+        }
+        return prev - 1;
+      });
+    }, 1000);
+
+    return () => clearInterval(interval);
+  }, [isOpen, timeLeft]);
 
   // Calculate order totals
   const totalItems = cart.reduce((acc, item) => acc + item.quantity, 0);
@@ -118,14 +211,41 @@ export default function CartDrawer({
 
             {/* Display banner of the current dispatch branch */}
             {sede && (
-              <div className="bg-wave-blue/20 px-5 py-2.5 border-b border-wave-blue/30 text-xs text-ocean-deep font-semibold flex items-center justify-between">
-                <div className="flex items-center gap-1.5">
-                  <span>{sede.emoji}</span>
-                  <span>Despacho: <b>{sede.suffix}</b></span>
+              <div className="flex flex-col bg-sky-50 border-b border-sky-100 divide-y divide-sky-100/40">
+                <div className="px-5 py-2 text-xs text-ocean-deep font-semibold flex items-center justify-between">
+                  <div className="flex items-center gap-1.5">
+                    <span>{sede.emoji}</span>
+                    <span>Despacho: <b>{sede.suffix}</b></span>
+                  </div>
+                  <span className="text-[10px] bg-ocean-deep text-white py-0.5 px-2 rounded-full uppercase font-bold tracking-wider">
+                    Sede Activa
+                  </span>
                 </div>
-                <span className="text-[10px] bg-ocean-deep text-white py-0.5 px-2 rounded-full uppercase font-bold">
-                  LOCAL SELECCIONADO
-                </span>
+                
+                {/* Visual Delivery Estimate & Timer */}
+                <div className="px-5 py-2.5 flex items-center justify-between bg-emerald-50/70 text-emerald-800">
+                  <div className="flex items-center gap-2">
+                    <span className="material-symbols-outlined text-[19px] text-emerald-600 animate-pulse font-bold">
+                      local_shipping
+                    </span>
+                    <div className="text-left">
+                      <p className="text-[10px] text-emerald-700/95 uppercase font-black tracking-wider leading-none mb-0.5">
+                        Entrega de Sabor Estimada
+                      </p>
+                      <p className="text-[11px] font-medium text-emerald-950/90 leading-tight">
+                        Tu pedido llegará fresquecito en:
+                      </p>
+                    </div>
+                  </div>
+                  
+                  {/* Digital active countdown box */}
+                  <div className="bg-emerald-600 border border-emerald-500/20 text-white font-mono text-center font-black px-2.5 py-1 rounded-lg flex items-center gap-1 text-xs shadow-3xs">
+                    <span className="material-symbols-outlined text-[14px]">schedule</span>
+                    <span>
+                      {formatTime(timeLeft)}
+                    </span>
+                  </div>
+                </div>
               </div>
             )}
 
@@ -228,6 +348,62 @@ export default function CartDrawer({
                       </div>
                     </motion.div>
                   ))}
+                  
+                  {/* Interactive Suggestions Section */}
+                  {(() => {
+                    const cartDishIds = new Set(cart.map(item => item.dish.id));
+                    const availableSuggestions = SUGGESTED_ADDONS.filter(addon => !cartDishIds.has(addon.id));
+                    
+                    if (availableSuggestions.length === 0) return null;
+                    
+                    return (
+                      <div className="pt-5 border-t border-gray-100/90 mt-6 text-left">
+                        <div className="flex items-center gap-1.5 mb-3">
+                          <span className="material-symbols-outlined text-[18px] text-sunset-coral animate-pulse font-bold">
+                            restaurant
+                          </span>
+                          <h4 className="text-[11px] font-black text-ocean-deep uppercase tracking-widest">
+                            ¿Deseas agregar un acompañamiento?
+                          </h4>
+                        </div>
+                        
+                        <div className="space-y-2.5">
+                          {availableSuggestions.map(addon => (
+                            <div
+                              key={addon.id}
+                              className="flex items-center gap-3 bg-ocean-deep/[0.02] border border-gray-150 p-2.5 rounded-xl hover:bg-sky-50/50 hover:border-sky-100 transition-all duration-300"
+                            >
+                              <img
+                                src={addon.image}
+                                alt={addon.name}
+                                referrerPolicy="no-referrer"
+                                className="w-12 h-12 object-cover rounded-lg shrink-0 shadow-3xs"
+                                loading="lazy"
+                              />
+                              <div className="flex-grow min-w-0">
+                                <p className="text-xs font-bold text-ocean-deep truncate leading-snug">
+                                  {addon.name}
+                                </p>
+                                <p className="text-[10px] text-gray-500 truncate mt-0.5">
+                                  {addon.description}
+                                </p>
+                                <span className="text-xs font-black text-sunset-coral block mt-0.5">
+                                  S/ {addon.price.toFixed(2)}
+                                </span>
+                              </div>
+                              <button
+                                onClick={() => onAddToCart(addon, 'medio')}
+                                className="bg-ocean-deep hover:bg-coastal-teal text-white font-extrabold px-3 py-1.5 rounded-lg text-xs flex items-center gap-1 shrink-0 transition-all select-none hover:scale-102 cursor-pointer shadow-3xs"
+                              >
+                                <span className="material-symbols-outlined text-[13px] font-bold">add</span>
+                                <span>Añadir</span>
+                              </button>
+                            </div>
+                          ))}
+                        </div>
+                      </div>
+                    );
+                  })()}
                 </div>
               )}
             </div>
