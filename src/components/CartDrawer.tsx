@@ -72,6 +72,7 @@ interface CartDrawerProps {
   onRemoveItem: (dishId: string, spicyLevel?: 'bajo' | 'medio' | 'alto') => void;
   onAddToCart: (dish: Dish, spicyLevel?: 'bajo' | 'medio' | 'alto') => void;
   sede: Sede | null;
+  onUpdateSpicyLevel?: (dishId: string, oldLevel?: 'bajo' | 'medio' | 'alto', newLevel?: 'bajo' | 'medio' | 'alto') => void;
 }
 
 export default function CartDrawer({
@@ -82,9 +83,39 @@ export default function CartDrawer({
   onRemoveItem,
   onAddToCart,
   sede,
+  onUpdateSpicyLevel,
 }: CartDrawerProps) {
-  const [customerName, setCustomerName] = useState("");
-  const [customerAddress, setCustomerAddress] = useState("");
+  const [customerName, setCustomerName] = useState(() => {
+    try {
+      return localStorage.getItem("tp_customer_name") || "";
+    } catch {
+      return "";
+    }
+  });
+  const [customerAddress, setCustomerAddress] = useState(() => {
+    try {
+      return localStorage.getItem("tp_customer_address") || "";
+    } catch {
+      return "";
+    }
+  });
+
+  // Track customer local details to automatically populate future visits smoothly
+  useEffect(() => {
+    try {
+      localStorage.setItem("tp_customer_name", customerName);
+    } catch (e) {
+      console.error(e);
+    }
+  }, [customerName]);
+
+  useEffect(() => {
+    try {
+      localStorage.setItem("tp_customer_address", customerAddress);
+    } catch (e) {
+      console.error(e);
+    }
+  }, [customerAddress]);
 
   const [timeLeft, setTimeLeft] = useState<number>(() => {
     if (!sede) return 25 * 60;
@@ -299,17 +330,30 @@ export default function CartDrawer({
                           {item.dish.name}
                         </h4>
                         <div className="flex flex-wrap gap-1 items-center mt-1">
-                          {item.spicyLevel && (
-                            <span className={`inline-flex items-center gap-0.5 text-[10px] uppercase font-semibold px-2 py-0.5 rounded-md ${
-                              item.spicyLevel === 'bajo' 
-                                ? 'bg-amber-50 text-amber-700 border border-amber-200' 
-                                : item.spicyLevel === 'medio' 
-                                ? 'bg-orange-50 text-orange-700 border border-orange-200' 
-                                : 'bg-red-50 text-red-700 border border-red-200'
-                            }`}>
+                          {item.spicyLevel && !item.dish.noSpicy && item.dish.category !== "postres" && item.dish.category !== "bebidas" ? (
+                            <div className="flex items-center gap-1 bg-gray-150/60 hover:bg-gray-200 px-2 py-0.5 rounded-md border border-gray-200/50 transition-colors">
+                              <span className="text-[9px] text-gray-500 font-black uppercase tracking-tight">Ají:</span>
+                              <select
+                                value={item.spicyLevel}
+                                onChange={(e) => {
+                                  onUpdateSpicyLevel?.(
+                                    item.dish.id,
+                                    item.spicyLevel,
+                                    e.target.value as 'bajo' | 'medio' | 'alto'
+                                  );
+                                }}
+                                className="text-[10px] uppercase font-black bg-transparent border-0 text-ocean-deep hover:text-coastal-teal focus:outline-none focus:ring-0 cursor-pointer p-0 leading-none"
+                              >
+                                <option value="bajo">Bajo</option>
+                                <option value="medio">Medio</option>
+                                <option value="alto">Alto</option>
+                              </select>
+                            </div>
+                          ) : item.spicyLevel ? (
+                            <span className="inline-flex items-center gap-0.5 text-[9px] uppercase font-semibold px-2 py-0.5 rounded-md bg-orange-50 text-orange-700 border border-orange-200">
                               🌶️ {item.spicyLevel}
                             </span>
-                          )}
+                          ) : null}
                         </div>
                         <span className="text-xs font-bold text-sunset-coral block mt-1">
                           S/ {(item.dish.price * item.quantity).toFixed(2)}

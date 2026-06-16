@@ -15,6 +15,14 @@ import BranchModal from "./components/BranchModal";
 import CartDrawer from "./components/CartDrawer";
 import DishCard from "./components/DishCard";
 import CustomToast from "./components/CustomToast";
+import ReservationModal from "./components/ReservationModal";
+
+// Modular Home Sections
+import HeroSection from "./components/home/HeroSection";
+import SpecialtiesSection from "./components/home/SpecialtiesSection";
+import TestimonialsSection from "./components/home/TestimonialsSection";
+import HistorySection from "./components/home/HistorySection";
+import SedesSection from "./components/home/SedesSection";
 
 export default function App() {
   // Restore State from localStorage
@@ -40,8 +48,37 @@ export default function App() {
   const [activeCategory, setActiveCategory] = useState("todos");
   const [toasts, setToasts] = useState<{ id: string; text: string; type: "success" | "info" | "warning" }[]>([]);
 
+  // Admin Mode state to override business hours restriction
+  const [isAdmin, setIsAdmin] = useState<boolean>(() => {
+    try {
+      const params = new URLSearchParams(window.location.search);
+      const adminParam = params.get("admin");
+      if (adminParam === "true") {
+        localStorage.setItem("tp_admin_mode", "true");
+        return true;
+      } else if (adminParam === "false") {
+        localStorage.setItem("tp_admin_mode", "false");
+        return false;
+      }
+      return localStorage.getItem("tp_admin_mode") === "true";
+    } catch (e) {
+      return false;
+    }
+  });
+
+  // Table reservation state variables
+  const [isReservationOpen, setIsReservationOpen] = useState(false);
+  const [reservationPreSede, setReservationPreSede] = useState<Sede | null>(null);
+
+  const handleOpenReservation = (preselected?: Sede | null) => {
+    setReservationPreSede(preselected || selectedSede);
+    setIsReservationOpen(true);
+  };
+
   // Check if restaurant is closed based on current local device time
   const checkIfClosed = (): boolean => {
+    if (isAdmin) return false;
+
     const now = new Date();
     const day = now.getDay(); // 0 = Sunday, 1 = Monday, ..., 6 = Saturday
     const hours = now.getHours();
@@ -89,15 +126,10 @@ export default function App() {
     }
   };
 
-  const [isClosed, setIsClosed] = useState<boolean>(checkIfClosed());
-
-  useEffect(() => {
-    // Check every 10 seconds to keep it real-time
-    const interval = setInterval(() => {
-      setIsClosed(checkIfClosed());
-    }, 10000);
-    return () => clearInterval(interval);
-  }, []);
+  const [isClosed, setIsClosed] = useState<boolean>(() => {
+    if (isAdmin) return false;
+    return checkIfClosed();
+  });
 
   // Display Toast Helper
   const showToast = (text: string, type: "success" | "info" | "warning" = "success") => {
@@ -107,6 +139,34 @@ export default function App() {
       setToasts(prev => prev.filter(t => t.id !== id));
     }, 3000);
   };
+
+  useEffect(() => {
+    if (isAdmin) {
+      setIsClosed(false);
+      return;
+    }
+    setIsClosed(checkIfClosed());
+    // Check every 10 seconds to keep it real-time
+    const interval = setInterval(() => {
+      setIsClosed(checkIfClosed());
+    }, 10000);
+    return () => clearInterval(interval);
+  }, [isAdmin]);
+
+  useEffect(() => {
+    const params = new URLSearchParams(window.location.search);
+    const adminParam = params.get("admin");
+    if (adminParam === "true") {
+      showToast("¡Bienvenido creador! Modo Administrador ACTIVO 🛠️. Restricciones horarias desactivadas.", "success");
+      // Clean up URL parameter to keep URL clean but maintain session
+      const newUrl = window.location.pathname;
+      window.history.replaceState({}, document.title, newUrl);
+    } else if (adminParam === "false") {
+      showToast("Modo administrador desactivado. Ahora ves la página como cliente.", "info");
+      const newUrl = window.location.pathname;
+      window.history.replaceState({}, document.title, newUrl);
+    }
+  }, []);
 
   // Branch Selector actions
   const handleSelectBranch = (sede: Sede) => {
@@ -154,6 +214,39 @@ export default function App() {
     setCart(prev => prev.filter(item => !(item.dish.id === dishId && item.spicyLevel === spicyLevel)));
   };
 
+  const handleUpdateSpicyLevel = (
+    dishId: string,
+    oldSpicy?: 'bajo' | 'medio' | 'alto',
+    newSpicy?: 'bajo' | 'medio' | 'alto'
+  ) => {
+    setCart(prev => {
+      const itemToChange = prev.find(item => item.dish.id === dishId && item.spicyLevel === oldSpicy);
+      if (!itemToChange) return prev;
+
+      const existing = prev.find(item => item.dish.id === dishId && item.spicyLevel === newSpicy);
+
+      if (existing && oldSpicy !== newSpicy) {
+        showToast(`Se unificó ${itemToChange.dish.name} con Ají ${newSpicy?.toUpperCase()}`);
+        return prev
+          .map(item => {
+            if (item.dish.id === dishId && item.spicyLevel === newSpicy) {
+              return { ...item, quantity: item.quantity + itemToChange.quantity };
+            }
+            return item;
+          })
+          .filter(item => !(item.dish.id === dishId && item.spicyLevel === oldSpicy));
+      } else {
+        showToast(`Término de ají cambiado a ${newSpicy?.toUpperCase()} para ${itemToChange.dish.name}`);
+        return prev.map(item => {
+          if (item.dish.id === dishId && item.spicyLevel === oldSpicy) {
+            return { ...item, spicyLevel: newSpicy };
+          }
+          return item;
+        });
+      }
+    });
+  };
+
   // Filtering Menu
   const filteredDishes = DISHES.filter(dish => {
     const matchesSearch = dish.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
@@ -182,6 +275,7 @@ export default function App() {
         sede={selectedSede}
         onChangeBranch={() => setIsBranchModalOpen(true)}
         isClosed={isClosed}
+        onOpenReservation={() => handleOpenReservation()}
       />
 
       <main className="flex-grow">
@@ -194,398 +288,38 @@ export default function App() {
               exit={{ opacity: 0, y: -15 }}
               transition={{ duration: 0.3 }}
             >
-              {/* --- HERO AREA --- */}
-              <header className="relative w-full min-h-[85vh] flex items-center justify-center overflow-hidden bg-ocean-deep pt-16 pb-20">
-                {/* Carousel backdrop with overlay */}
-                <div className="absolute inset-0 z-0">
-                  <div className="absolute inset-0 bg-gradient-to-r from-ocean-deep/95 via-ocean-deep/70 to-ocean-deep/45 z-10 mix-blend-multiply" />
-                  <img
-                    src={heroCeviche}
-                    alt="Cevichería Terminal Pesquero"
-                    className="w-full h-full object-cover bg-center"
-                    loading="lazy"
-                  />
-                </div>
+              <HeroSection
+                heroCeviche={heroCeviche}
+                onViewMenu={() => {
+                  setCurrentTab("carta");
+                  setActiveCategory("todos");
+                }}
+                onViewDuosCombos={() => {
+                  setCurrentTab("carta");
+                  setActiveCategory("duos");
+                }}
+              />
 
-                <div className="relative z-20 max-w-7xl mx-auto px-4 md:px-8 w-full grid grid-cols-1 lg:grid-cols-12 gap-12 items-center">
-                  <div className="lg:col-span-8 flex flex-col gap-6 text-left">
-                    <div className="inline-flex items-center gap-2 bg-wave-blue/30 backdrop-blur-xs text-wave-blue px-4 py-2 rounded-full w-max font-bold text-xs uppercase tracking-widest shadow-xs">
-                      <span className="material-symbols-outlined text-sm font-bold">anchor</span>
-                      Sabor de Altamar
-                    </div>
-                    
-                    <h1 className="font-display text-4xl sm:text-6xl text-white font-extrabold leading-tight">
-                      Terminal Pesquero: <br />
-                      <span className="text-sunset-coral drop-shadow-sm font-black">
-                        Tradición y Frescura Marina
-                      </span>
-                    </h1>
-                    
-                    <p className="text-sm sm:text-lg text-[#EAE8E4] max-w-2xl leading-relaxed">
-                      Sumérgete en la auténtica experiencia del puerto. Platos potentes, ceviches con harto jugo y fondos bien taipá, preparados con la pesca fresca del día y el verdadero corazón chalaco.
-                    </p>
+              <SpecialtiesSection
+                arrozMariscos={arrozMariscos}
+                causaAcevichada={causaAcevichada}
+                chicharronPescado={chicharronPescado}
+                onAddToCart={(dish) => handleAddToCart(dish, 'medio')}
+                onViewCombos={() => {
+                  setCurrentTab("carta");
+                  setActiveCategory("combos");
+                }}
+              />
 
-                    <div className="flex flex-col sm:flex-row gap-4 mt-4">
-                      <button
-                        onClick={() => {
-                          setCurrentTab("carta");
-                          setActiveCategory("todos");
-                        }}
-                        className="bg-sunset-coral hover:bg-[#e08d2d] text-white px-8 py-4 rounded-xl font-bold uppercase tracking-wider text-xs shadow-lg transition-all flex items-center justify-center gap-2 active:scale-95 cursor-pointer"
-                      >
-                        <span className="material-symbols-outlined text-base">menu_book</span>
-                        Ver la Carta Completa
-                      </button>
+              <TestimonialsSection />
 
-                      <button
-                        onClick={() => {
-                          setCurrentTab("carta");
-                          setActiveCategory("duos");
-                        }}
-                        className="bg-transparent border-2 border-white hover:bg-white hover:text-ocean-deep text-white px-8 py-4 rounded-xl font-bold uppercase tracking-wider text-xs transition-all flex items-center justify-center gap-2 active:scale-95 cursor-pointer"
-                      >
-                        <span className="material-symbols-outlined text-base">motorcycle</span>
-                        Ver Dúos & Combos
-                      </button>
-                    </div>
-                  </div>
+              <HistorySection equipoSalon={equipoSalon} />
 
-                  {/* Decorative Glass Badge */}
-                  <div className="hidden lg:block lg:col-span-4 relative">
-                    <div className="hero-pattern absolute inset-0 z-0 h-40" />
-                    <div className="glass-card p-6 rounded-2xl shadow-xl border-t-4 border-coastal-teal text-left animate-float">
-                      <div className="flex items-center gap-2 mb-3">
-                        <span className="text-amber-400 text-3xl font-bold">★</span>
-                        <h3 className="font-display text-lg font-bold text-ocean-deep leading-tight">
-                          La vida es más sabrosa
-                        </h3>
-                      </div>
-                      <p className="font-sans text-xs text-gray-600 leading-relaxed font-semibold">
-                        Nuestra red atrapa la pesca al amanecer. Directo del terminal a tu paladar, garantizando sabor 100% chalaco y peruano legítimo.
-                      </p>
-                    </div>
-                  </div>
-                </div>
-
-                {/* Wave Divider */}
-                <div className="absolute bottom-0 w-full overflow-hidden leading-none z-10 pointer-events-none">
-                  <svg className="relative block w-full h-[40px] md:h-[65px]" preserveAspectRatio="none" viewBox="0 0 1200 120" xmlns="http://www.w3.org/2000/svg">
-                    <path className="fill-[#F9F6F2]" d="M321.39,56.44c58-10.79,114.16-30.13,172-41.86,82.39-16.72,168.19-17.73,250.45-.39C823.78,31,906.67,72,985.66,92.83c70.05,18.48,146.53,26.09,214.34,3V120H0V95.8C59.71,118,130.95,123,194,108.57,243.68,97.35,285.83,72.41,321.39,56.44Z" />
-                  </svg>
-                </div>
-              </header>
-
-              {/* --- SPECIALTIES BENTO GRID --- */}
-              <section className="py-20 max-w-7xl mx-auto px-4 md:px-8">
-                <div className="text-center max-w-3xl mx-auto mb-16">
-                  <span className="text-xs text-coastal-teal font-black uppercase tracking-widest block mb-2">
-                    Lo Mejor del Puerto
-                  </span>
-                  <h2 className="font-display text-3xl sm:text-4xl font-extrabold text-ocean-deep">
-                    Nuestras Especialidades
-                  </h2>
-                  <p className="text-sm text-gray-500 mt-3 max-w-xl mx-auto font-medium">
-                    Platos exclusivos con harto jugo, fondos bien taipá y entradas potentes. Solo para conocedores del buen comer marino.
-                  </p>
-                  <div className="w-16 h-1 bg-sunset-coral mx-auto mt-5 rounded-full" />
-                </div>
-
-                {/* Classic Bento Grid */}
-                <div className="grid grid-cols-1 md:grid-cols-12 gap-6 auto-rows-[minmax(320px,auto)] font-sans">
-                  
-                  {/* Featured element 1: Arroz con Mariscos */}
-                  <div className="md:col-span-8 relative group rounded-2xl overflow-hidden shadow-sm hover:shadow-lg transition-all duration-500 bg-white">
-                    <div className="absolute inset-0 bg-gradient-to-t from-ocean-deep/90 via-ocean-deep/30 to-transparent z-10" />
-                    <img
-                      src={arrozMariscos}
-                      alt="Arroz con Mariscos"
-                      className="w-full h-full object-cover group-hover:scale-102 transition-transform duration-700"
-                      loading="lazy"
-                    />
-                    <div className="absolute bottom-0 left-0 p-6 md:p-8 z-20 w-full text-left">
-                      <span className="bg-shell-pink text-ocean-deep px-3 py-1 rounded-full text-[10px] font-bold uppercase tracking-wider block w-max mb-3">
-                        El de la Firme Recomendación
-                      </span>
-                      <h3 className="font-display text-2xl sm:text-3xl font-extrabold text-white mb-2">
-                        Arroz con Mariscos
-                      </h3>
-                      <p className="text-xs text-gray-200 max-w-lg mb-4 leading-relaxed font-semibold">
-                        Preparación húmeda al wok con mixtura de langostinos, calamares y conchas tiernas marinadas con ají panca y vino blanco. Un clásico taipá.
-                      </p>
-                      <div className="flex justify-between items-center bg-black/20 p-2.5 rounded-xl backdrop-blur-xs">
-                        <span className="font-display font-black text-lg text-sunset-coral">
-                          S/ 49.90
-                        </span>
-                        <button
-                          onClick={() => {
-                            const item = DISHES.find(d => d.id === "fon_arroz_mar");
-                            if (item) handleAddToCart(item);
-                          }}
-                          className="bg-sunset-coral hover:bg-coastal-teal text-white py-2 px-5 rounded-lg text-xs uppercase font-extrabold transition-colors cursor-pointer"
-                        >
-                          Añadir al pedido
-                        </button>
-                      </div>
-                    </div>
-                  </div>
-
-                  {/* Featured element 2: Causa Acevichada */}
-                  <div className="md:col-span-4 relative group rounded-2xl overflow-hidden shadow-sm hover:shadow-lg transition-all duration-500 bg-white flex flex-col justify-end min-h-[320px]">
-                    <div className="absolute inset-0 z-0">
-                      <img
-                        src={causaAcevichada}
-                        alt="Causa Acevichada del Terminal"
-                        referrerPolicy="no-referrer"
-                        className="w-full h-full object-cover transition-transform duration-700 group-hover:scale-105"
-                        loading="lazy"
-                      />
-                    </div>
-                    
-                    {/* Gradient Overlay for legibility */}
-                    <div className="absolute inset-0 bg-gradient-to-t from-ocean-deep/95 via-ocean-deep/30 to-transparent z-10 pointer-events-none" />
-                    
-                    <div className="relative z-20 p-6 text-left">
-                      <span className="bg-wave-blue text-ocean-deep px-3 py-1 rounded-full text-[10px] font-bold uppercase tracking-wider block w-max mb-2">
-                        Entrada Potente (La Firma ⭐)
-                      </span>
-                      <h3 className="font-display text-xl sm:text-2xl font-extrabold text-white mb-1.5">
-                        Causa Acevichada
-                      </h3>
-                      <p className="text-xs text-gray-200 mb-4 line-clamp-3 leading-relaxed font-medium">
-                        Cremoso puré de papa con ají amarillo limeño, relleno de láminas de palta suave, coronada con un generoso ceviche clásico de harto jugo y chicharrón crujiente.
-                      </p>
-                      <div className="flex justify-between items-center">
-                        <span className="font-display font-black text-base text-sunset-coral font-bold">
-                          S/ 39.90
-                        </span>
-                        <button
-                          onClick={() => {
-                            const item = DISHES.find(d => d.id === "ent_causa");
-                            if (item) handleAddToCart(item);
-                          }}
-                          className="bg-white/10 hover:bg-white text-white hover:text-ocean-deep border border-white/20 p-2 rounded-full flex items-center justify-center transition-all cursor-pointer"
-                        >
-                          <span className="material-symbols-outlined text-[18px]">add</span>
-                        </button>
-                      </div>
-                    </div>
-                  </div>
-
-                  {/* Featured element 3: Jalea Completa */}
-                  <div className="md:col-span-12 lg:col-span-6 relative group rounded-2xl overflow-hidden shadow-sm hover:shadow-lg transition-all duration-300 bg-white min-h-[340px] flex items-end">
-                    <div className="absolute inset-0 bg-gradient-to-r from-ocean-deep/95 via-ocean-deep/60 to-transparent z-10" />
-                    <img
-                      src={chicharronPescado}
-                      alt="Chicharrón de Pescado"
-                      referrerPolicy="no-referrer"
-                      className="absolute inset-0 w-full h-full object-cover object-right group-hover:scale-102 transition-transform duration-700"
-                      loading="lazy"
-                    />
-                    <div className="relative z-20 p-6 md:p-8 text-left max-w-md">
-                      <h3 className="font-display text-2xl font-bold text-white mb-2">
-                        Chicharrón de Pescado
-                      </h3>
-                      <p className="text-xs text-gray-200 mb-6 leading-relaxed font-semibold">
-                        Crujiente y doradito. Trozos jugosos de pescado fresco con zarza criolla norteña de cebollas finas, yucas doradas calientes y nuestro ají rocoto de la casa.
-                      </p>
-                      <div className="flex items-center gap-4">
-                        <span className="font-display font-black text-xl text-sunset-coral">
-                          S/ 48.90
-                        </span>
-                        <button
-                          onClick={() => {
-                            const item = DISHES.find(d => d.id === "fon_chicharron");
-                            if (item) handleAddToCart(item);
-                          }}
-                          className="bg-coastal-teal hover:bg-sunset-coral text-white border-0 py-2.5 px-5 rounded-lg text-xs uppercase font-extrabold tracking-wider transition-all cursor-pointer"
-                        >
-                          Pedir Ahora
-                        </button>
-                      </div>
-                    </div>
-                  </div>
-
-                  {/* Promo element 4: Direct menu links */}
-                  <div className="md:col-span-12 lg:col-span-6 bg-coastal-teal rounded-2xl p-8 flex flex-col justify-center items-center text-center relative overflow-hidden text-white shadow-sm hover:shadow-md transition-shadow">
-                    <div className="hero-pattern absolute inset-0 opacity-10 pointer-events-none" />
-                    <span className="material-symbols-outlined text-[54px] mb-3 animate-pulse">sailing</span>
-                    <h3 className="font-display text-2xl font-black mb-1.5 uppercase tracking-tight">
-                      Combos Familiares
-                    </h3>
-                    <p className="text-xs font-semibold text-white/90 max-w-sm mb-6 leading-relaxed">
-                      Lleva el verdadero sabor del puerto directamente a la mesa del hogar con nuestros combos especiales de 3 a 5 personas, ¡bien servidos!
-                    </p>
-                    <button
-                      onClick={() => {
-                        setCurrentTab("carta");
-                        setActiveCategory("combos");
-                      }}
-                      className="bg-white text-ocean-deep hover:bg-sunset-coral hover:text-white px-7 py-3 rounded-xl text-xs uppercase font-extrabold tracking-widest transition-all shadow-md cursor-pointer"
-                    >
-                      Ver Combos
-                    </button>
-                  </div>
-                </div>
-              </section>
-
-              {/* --- REAL REVIEWS / TESTIMONIALS --- */}
-              <section className="py-16 bg-white border-y border-gray-100">
-                <div className="max-w-7xl mx-auto px-4 md:px-8">
-                  <div className="text-center mb-10">
-                    <span className="text-xs text-sunset-coral font-black uppercase tracking-wider">Testimonios</span>
-                    <h2 className="font-display text-3xl font-extrabold text-ocean-deep mt-1">El Veredicto de la Gente</h2>
-                    <p className="text-xs text-gray-400 mt-1">Lo que nuestros comensales comentan en redes</p>
-                  </div>
-
-                  <div className="grid grid-cols-1 md:grid-cols-3 gap-6 font-sans">
-                    <div className="bg-[#F9F6F2] p-6 rounded-xl border border-gray-100/50 flex flex-col justify-between text-left">
-                      <p className="text-xs text-gray-600 font-medium italic leading-relaxed">
-                        &ldquo;¡Uff, causa! El ceviche carretillero con su chicharrón de pota crujiente estuvo recontra taipá, bien picantito y fresco como en el mismo Callao. Recomendadísimo.&rdquo;
-                      </p>
-                      <div className="mt-4 flex items-center gap-2">
-                        <span className="text-amber-400 text-sm">★★★★★</span>
-                        <span className="text-xs font-bold text-ocean-deep">— Renzo P. (Causa Fiel)</span>
-                      </div>
-                    </div>
-                    <div className="bg-[#F9F6F2] p-6 rounded-xl border border-gray-100/50 flex flex-col justify-between text-left">
-                      <p className="text-xs text-gray-600 font-medium italic leading-relaxed">
-                        &ldquo;Pedimos el Combo Chiclayo para el almuerzo del domingo y llegó al toque, la chicha morada estaba heladita y el arroz con mariscos bien cremoso. Un sabor excelente.&rdquo;
-                      </p>
-                      <div className="mt-4 flex items-center gap-2">
-                        <span className="text-amber-400 text-sm">★★★★★</span>
-                        <span className="text-xs font-bold text-ocean-deep">— Mariana T. (La Molina)</span>
-                      </div>
-                    </div>
-                    <div className="bg-[#F9F6F2] p-6 rounded-xl border border-gray-100/50 flex flex-col justify-between text-left">
-                      <p className="text-xs text-gray-600 font-medium italic leading-relaxed">
-                        &ldquo;Los tequeños del terminal y el Arroz Chaufa de Mariscos son sencillamente de otro mundo. Súper abundante la porción, ideal para compartir en familia una tarde.&rdquo;
-                      </p>
-                      <div className="mt-4 flex items-center gap-2">
-                        <span className="text-amber-400 text-sm">★★★★★</span>
-                        <span className="text-xs font-bold text-ocean-deep">— Gianfranco S. (Miraflores)</span>
-                      </div>
-                    </div>
-                  </div>
-                </div>
-              </section>
-
-              {/* --- HISTORIA SECTION --- */}
-              <section className="py-20 bg-[#F0EDE9] relative overflow-hidden" id="historia">
-                <div className="max-w-7xl mx-auto px-4 md:px-8 relative z-10 grid grid-cols-1 lg:grid-cols-12 gap-12 items-center">
-                  
-                  {/* Left Story text column */}
-                  <div className="lg:col-span-7 flex flex-col gap-6 text-left">
-                    <div className="flex items-center gap-3">
-                      <span className="w-10 h-1 bg-coastal-teal rounded-full" />
-                      <span className="text-xs font-black text-coastal-teal uppercase tracking-widest">
-                        Nuestra Esencia
-                      </span>
-                    </div>
-
-                    <h2 className="font-display text-3xl sm:text-5xl font-extrabold text-ocean-deep leading-tight">
-                      Pasión por el Mar, <br />
-                      <span className="text-sunset-coral italic font-normal">
-                        Sabor Chalaco Original
-                      </span>
-                    </h2>
-
-                    <p className="text-sm sm:text-base text-gray-600 leading-relaxed font-semibold">
-                      En Terminal Pesquero, no solo servimos comida; honramos la herencia del Callao. Nos inspiramos en los vibrantes puertos pesqueros donde el pescador madruga al alba, trayendo la red pesada para cocinar al momento.
-                    </p>
-
-                    <p className="text-sm text-gray-500 leading-relaxed">
-                      Nuestra filosofía es bien simple: <strong className="text-ocean-deep">&ldquo;¡Así que pide de una nomás!&rdquo;</strong>. Platos rebosantes de ingredientes sinceros y de primera, sazón criolla para chuparse los dedos y un servicio veloz para alegrar el día.
-                    </p>
-
-                    <div className="grid grid-cols-2 gap-4 mt-2">
-                      <div className="border-l-2 border-coastal-teal pl-4 text-left">
-                        <span className="block font-display text-2xl font-black text-ocean-deep">100%</span>
-                        <span className="text-[10px] font-black text-gray-500 uppercase tracking-widest">
-                          Pesca Fresca Matutina
-                        </span>
-                      </div>
-                      <div className="border-l-2 border-sunset-coral pl-4 text-left">
-                        <span className="block font-display text-2xl font-black text-ocean-deep">9</span>
-                        <span className="text-[10px] font-black text-gray-500 uppercase tracking-widest">
-                          Puertos a tu Servicio
-                        </span>
-                      </div>
-                    </div>
-                  </div>
-
-                  {/* Right Story Graphic column */}
-                  <div className="lg:col-span-5 relative min-h-[440px] rounded-2xl overflow-hidden flex flex-col justify-end p-6 group shadow-lg">
-                    <div className="absolute inset-0 z-0">
-                      <div className="absolute inset-0 bg-gradient-to-t from-ocean-deep via-ocean-deep/30 to-transparent z-10" />
-                      <img
-                        src={equipoSalon}
-                        alt="Equipo Terminal Pesquero"
-                        referrerPolicy="no-referrer"
-                        className="w-full h-full object-cover transition-transform duration-700 group-hover:scale-102"
-                        loading="lazy"
-                      />
-                    </div>
-
-                    <span className="absolute top-4 right-4 material-symbols-outlined text-[90px] text-white/10 -rotate-12 pointer-events-none">
-                      anchor
-                    </span>
-
-                    <div className="relative z-20 bg-ocean-deep/80 backdrop-blur-sm border border-white/10 p-5 rounded-xl text-left">
-                      <h3 className="font-display text-lg font-bold text-white mb-2">
-                        Visítanos en nuestros salones
-                      </h3>
-                      <p className="text-xs text-gray-200 leading-relaxed font-semibold">
-                        Nuestras 9 sedes abren de Lunes a Jueves de 12:00 pm a 4:30 pm, y los Fines de Semana (Viernes a Domingo) listos para servirte hasta las 5:00 pm en todo Lima.
-                      </p>
-                    </div>
-                  </div>
-                </div>
-              </section>
-
-              {/* --- SEDES SECTOR --- */}
-              <section className="py-20 max-w-7xl mx-auto px-4 md:px-8">
-                <div className="text-center mb-12">
-                  <span className="text-xs text-coastal-teal font-black uppercase tracking-widest">Encuéntranos</span>
-                  <h2 className="font-display text-3xl font-extrabold text-ocean-deep mt-1">Sedes Terminal Pesquero</h2>
-                  <p className="text-xs text-gray-400 mt-1">Haz clic en tu local favorito para empezar a ordenar</p>
-                </div>
-
-                <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-5 font-sans">
-                  {SEDES.map(s => {
-                    const isActive = selectedSede?.id === s.id;
-                    return (
-                      <div
-                        key={s.id}
-                        onClick={() => handleSelectBranch(s)}
-                        className={`p-5 rounded-2xl border text-left cursor-pointer transition-all ${
-                          isActive
-                            ? "border-coastal-teal bg-wave-blue/10 shadow-md ring-2 ring-coastal-teal/10"
-                            : "border-gray-100 hover:border-wave-blue hover:bg-white bg-white hover:shadow-sm"
-                        }`}
-                      >
-                        <div className="flex items-center justify-between mb-3">
-                          <span className="text-3xl bg-gray-50 p-2.5 rounded-xl block">{s.emoji}</span>
-                          {isActive && (
-                            <span className="bg-ocean-deep text-white text-[9px] uppercase font-bold py-1 px-2.5 rounded-full">
-                              Sede Activa
-                            </span>
-                          )}
-                        </div>
-                        <h3 className="font-bold text-sm text-ocean-deep uppercase tracking-tight">
-                          {s.suffix}
-                        </h3>
-                        <p className="text-xs text-gray-500 mt-1 leading-normal font-medium">
-                          {s.address}
-                        </p>
-                        <div className="mt-4 pt-3 border-t border-gray-50 flex items-center justify-between text-xs font-bold text-coastal-teal">
-                          <span>Establecer como sede</span>
-                          <span className="material-symbols-outlined text-sm">arrow_forward</span>
-                        </div>
-                      </div>
-                    );
-                  })}
-                </div>
-              </section>
+              <SedesSection
+                selectedSede={selectedSede}
+                onSelectSede={handleSelectBranch}
+                onOpenReservationForSede={(s) => handleOpenReservation(s)}
+              />
             </motion.div>
           ) : (
             <motion.div
@@ -627,43 +361,52 @@ export default function App() {
                   <motion.div
                     initial={{ opacity: 0, y: -10 }}
                     animate={{ opacity: 1, y: 0 }}
-                    className="mb-8 overflow-hidden rounded-2xl bg-amber-50/90 border-2 border-amber-200/70 shadow-xs"
+                    className="mb-8 overflow-hidden rounded-2xl bg-gradient-to-r from-amber-50 via-orange-50 to-amber-50 border-2 border-amber-300 shadow-md ring-4 ring-amber-500/10"
                   >
                     <div className="flex flex-col md:flex-row items-stretch">
                       {/* Left icon slice */}
-                      <div className="bg-gradient-to-br from-amber-500 to-amber-600 text-white px-6 py-6 md:py-0 flex flex-col items-center justify-center text-center shrink-0 w-full md:w-36 select-none">
-                        <span className="material-symbols-outlined text-[36px] font-bold animate-pulse">
-                          lock_clock
+                      <div className="bg-gradient-to-br from-amber-500 via-orange-600 to-red-600 text-white px-6 py-8 md:py-0 flex flex-col items-center justify-center text-center shrink-0 w-full md:w-44 select-none">
+                        <span className="material-symbols-outlined text-4xl mb-2 animate-bounce">
+                          door_front
                         </span>
-                        <span className="text-[9px] uppercase font-black tracking-widest mt-1.5 text-amber-100">
-                          Fuera de Horario
+                        <span className="text-[10px] uppercase font-black tracking-widest text-[#FFF5EB]">
+                          Cocina Cerrada
                         </span>
+                        <div className="mt-2 bg-black/25 backdrop-blur-xs text-[#FFF5EB] px-3 py-1 rounded-full text-[9px] font-black tracking-wider uppercase">
+                          {info.nextOpen}
+                        </div>
                       </div>
                       
                       {/* Reason / Details text */}
-                      <div className="p-5 flex-grow text-left">
-                        <div className="flex flex-wrap items-center gap-2 mb-2">
-                          <h2 className="text-base font-black text-amber-950 uppercase tracking-wide">
-                            {info.title}
-                          </h2>
-                          <span className="bg-amber-100 text-amber-900 border border-amber-300/30 text-[10px] font-black uppercase tracking-widest px-2.5 py-0.5 rounded-full">
-                            Apertura: {info.nextOpen}
-                          </span>
-                        </div>
-                        <p className="text-xs text-amber-900/90 font-medium leading-relaxed max-w-3xl">
-                          {info.message}
-                        </p>
-                        
-                        <div className="mt-4 pt-3 border-t border-amber-200/50 flex flex-wrap items-center justify-between gap-3 text-[11px] font-semibold text-amber-950/80">
-                          <div className="flex items-center gap-1.5">
-                            <span className="material-symbols-outlined text-sm text-amber-700">schedule</span>
-                            <span>Sede Delivery: <b className="text-amber-950">{info.hours}</b></span>
+                      <div className="p-6 flex-grow text-left flex flex-col justify-between">
+                        <div>
+                          <div className="flex flex-wrap items-center gap-2 mb-2">
+                            <h2 className="text-lg font-black text-amber-950 uppercase tracking-tight">
+                              {info.title}
+                            </h2>
+                            <span className="bg-red-100 text-red-800 border border-red-200 text-[9px] font-extrabold uppercase tracking-widest px-2.5 py-0.5 rounded-full flex items-center gap-1">
+                              <span className="inline-block w-1.5 h-1.5 rounded-full bg-red-600" />
+                              Cerrado Fuera de Horario
+                            </span>
                           </div>
                           
-                          <div className="flex items-center gap-1">
-                            <span className="w-2 h-2 rounded-full bg-rose-500 animate-ping mr-1" />
-                            <span className="text-[10px] text-rose-700 font-extrabold uppercase tracking-wider">
-                              No se aceptan pedidos web en este momento
+                          <p className="text-xs sm:text-sm text-amber-900 leading-relaxed font-semibold max-w-3xl">
+                            {info.message}
+                          </p>
+                        </div>
+                        
+                        <div className="mt-5 pt-4 border-t border-amber-300/40 flex flex-col md:flex-row md:items-center justify-between gap-4 text-xs font-bold text-amber-950/95">
+                          <div className="flex flex-col sm:flex-row sm:items-center gap-2 sm:gap-6">
+                            <div className="flex items-center gap-2">
+                              <span className="material-symbols-outlined text-sm text-amber-800">alarm_on</span>
+                              <span>Nuestro Horario: <b className="text-amber-950 font-extrabold">{info.hours}</b></span>
+                            </div>
+                          </div>
+
+                          <div className="flex items-center gap-2.5 bg-amber-500/10 border border-amber-500/20 px-3.5 py-1.5 rounded-xl text-amber-950">
+                            <span className="w-2.5 h-2.5 rounded-full bg-red-600 animate-pulse" />
+                            <span className="text-[10px] font-black uppercase tracking-wider">
+                              Los pedidos web se habilitarán a las 12:00 PM
                             </span>
                           </div>
                         </div>
@@ -843,6 +586,7 @@ export default function App() {
         onRemoveItem={handleRemoveItem}
         onAddToCart={handleAddToCart}
         sede={selectedSede}
+        onUpdateSpicyLevel={handleUpdateSpicyLevel}
       />
 
       {/* Interactive Branch Selection Modal */}
@@ -853,8 +597,37 @@ export default function App() {
         currentSede={selectedSede}
       />
 
+      {/* Table Reservation Dialog Modal */}
+      <ReservationModal
+        isOpen={isReservationOpen}
+        onClose={() => setIsReservationOpen(false)}
+        selectedSede={reservationPreSede}
+        onSuccess={(msg) => showToast(msg, "success")}
+      />
+
       {/* Top notifier toasts */}
       <CustomToast toasts={toasts} />
+
+      {/* Floating Admin Mode Indicator */}
+      {isAdmin && (
+        <div className="fixed bottom-6 left-6 z-[100] flex items-center gap-2.5 bg-ocean-deep/95 border border-amber-500/50 text-white pl-4 pr-5 py-2.5 rounded-full shadow-2xl font-sans text-xs select-none">
+          <div className="flex items-center gap-1.5">
+            <span className="w-2.5 h-2.5 rounded-full bg-emerald-500 animate-pulse" />
+            <b className="tracking-widest uppercase font-black text-sunset-coral text-[10px]">Admin Activo</b>
+          </div>
+          <span className="text-gray-500">|</span>
+          <button
+            onClick={() => {
+              localStorage.setItem("tp_admin_mode", "false");
+              setIsAdmin(false);
+              showToast("Modo administrador desactivado. Ahora ves la página como cliente 🌊", "info");
+            }}
+            className="text-[#EFA351] hover:text-white font-extrabold uppercase tracking-wider text-[10px] transition-colors cursor-pointer"
+          >
+            Salir
+          </button>
+        </div>
+      )}
     </div>
   );
 }

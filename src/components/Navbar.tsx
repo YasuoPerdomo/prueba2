@@ -9,6 +9,7 @@ interface NavbarProps {
   sede: Sede | null;
   onChangeBranch: () => void;
   isClosed?: boolean;
+  onOpenReservation?: () => void;
 }
 
 export default function Navbar({
@@ -19,6 +20,7 @@ export default function Navbar({
   sede,
   onChangeBranch,
   isClosed = false,
+  onOpenReservation,
 }: NavbarProps) {
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
 
@@ -83,6 +85,14 @@ export default function Navbar({
             }`}
           >
             Carta Completa
+          </button>
+
+          <button
+            onClick={onOpenReservation}
+            className="text-gray-500 hover:text-ocean-deep font-semibold tracking-wide text-sm transition-colors flex items-center gap-1 cursor-pointer"
+          >
+            <span className="material-symbols-outlined text-[18px] text-[#EFA351]">table_restaurant</span>
+            <span>Reservar Mesa</span>
           </button>
 
           <a
@@ -170,6 +180,17 @@ export default function Navbar({
             }`}
           >
             Ver Carta Completa
+          </button>
+
+          <button
+            onClick={() => {
+              onOpenReservation?.();
+              setMobileMenuOpen(false);
+            }}
+            className="w-full text-left py-2 px-3 rounded-lg font-bold text-sm tracking-wide text-gray-600 flex items-center gap-2 block"
+          >
+            <span className="material-symbols-outlined text-[18px] text-[#EFA351]">table_restaurant</span>
+            <span>Reservar Mesa</span>
           </button>
 
           <div className="border-t border-gray-100 pt-3 flex flex-col gap-2">

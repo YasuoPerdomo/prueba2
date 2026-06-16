@@ -1,6 +1,14 @@
 import React, { useState } from "react";
 import { Dish } from "../types";
 
+const ALLERGENS_MAP: Record<string, { label: string; emoji: string; color: string }> = {
+  mariscos: { label: "Mariscos", emoji: "🦐", color: "bg-red-50 text-red-700 border-red-200/80 hover:bg-red-100/40" },
+  gluten: { label: "Gluten", emoji: "🌾", color: "bg-amber-50 text-amber-700 border-amber-200/80 hover:bg-amber-100/40" },
+  lacteos: { label: "Lácteos", emoji: "🥛", color: "bg-blue-50 text-blue-700 border-blue-200/80 hover:bg-blue-100/40" },
+  pescado: { label: "Pescado", emoji: "🐟", color: "bg-emerald-50 text-emerald-700 border-emerald-200/80 hover:bg-emerald-100/40" },
+  huevo: { label: "Huevo", emoji: "🥚", color: "bg-yellow-50 text-yellow-700 border-yellow-200/80 hover:bg-yellow-100/40" },
+};
+
 interface DishCardProps {
   key?: string;
   dish: Dish;
@@ -74,6 +82,32 @@ export default function DishCard({ dish, onAddToCart, isClosed = false }: DishCa
           <p className="text-xs text-gray-500 leading-relaxed font-medium mb-4 line-clamp-3">
             {dish.description}
           </p>
+
+          {/* Elegant Allergen Badges */}
+          {dish.alergenos && dish.alergenos.length > 0 && (
+            <div className="flex flex-wrap gap-1.5 mb-4 items-center">
+              <span className="text-[9px] font-black uppercase text-gray-400 tracking-wider">
+                Contiene:
+              </span>
+              {dish.alergenos.map((al) => {
+                const info = ALLERGENS_MAP[al.toLowerCase()] || {
+                  label: al,
+                  emoji: "⚠️",
+                  color: "bg-gray-50 text-gray-700 border-gray-200 hover:bg-gray-100",
+                };
+                return (
+                  <span
+                    key={al}
+                    title={`Este plato contiene alérgeno: ${info.label}`}
+                    className={`inline-flex items-center gap-1 text-[9px] px-2 py-0.5 rounded-full border ${info.color} font-bold transition-colors cursor-help select-none`}
+                  >
+                    <span>{info.emoji}</span>
+                    <span className="capitalize">{info.label}</span>
+                  </span>
+                );
+              })}
+            </div>
+          )}
         </div>
 
         {/* Nivel de Picante Selector */}
