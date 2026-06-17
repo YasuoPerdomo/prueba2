@@ -24,6 +24,21 @@ import TestimonialsSection from "./components/home/TestimonialsSection";
 import HistorySection from "./components/home/HistorySection";
 import SedesSection from "./components/home/SedesSection";
 
+const containerVariants = {
+  hidden: { opacity: 0 },
+  show: {
+    opacity: 1,
+    transition: {
+      staggerChildren: 0.06,
+    },
+  },
+};
+
+const itemVariants = {
+  hidden: { opacity: 0, y: 15 },
+  show: { opacity: 1, y: 0, transition: { type: "spring", stiffness: 100, damping: 15 } },
+};
+
 export default function App() {
   // Restore State from localStorage
   const initSede = (): Sede | null => {
@@ -470,16 +485,23 @@ export default function App() {
                     No se encontraron platos que coincidan con la búsqueda. Intenta con otra palabra.
                   </div>
                 ) : (
-                  <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
+                  <motion.div
+                    key={activeCategory}
+                    variants={containerVariants}
+                    initial="hidden"
+                    animate="show"
+                    className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6"
+                  >
                     {filteredDishes.map(dish => (
-                      <DishCard
-                        key={dish.id}
-                        dish={dish}
-                        onAddToCart={handleAddToCart}
-                        isClosed={isClosed}
-                      />
+                      <motion.div key={dish.id} variants={itemVariants}>
+                        <DishCard
+                          dish={dish}
+                          onAddToCart={handleAddToCart}
+                          isClosed={isClosed}
+                        />
+                      </motion.div>
                     ))}
-                  </div>
+                  </motion.div>
                 )}
               </div>
             </motion.div>
