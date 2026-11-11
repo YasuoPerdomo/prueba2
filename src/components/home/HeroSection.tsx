@@ -21,7 +21,8 @@ export default function HeroSection({
           src={heroCeviche}
           alt="Cevichería Terminal Pesquero"
           className="w-full h-full object-cover bg-center animate-pulse-slow"
-          loading="lazy"
+          loading="eager"
+          decoding="async"
         />
       </div>
 

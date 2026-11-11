@@ -1,7 +1,7 @@
 import { Dish, Sede } from "./types";
-import arrozMariscos from "./assets/images/arroz_mariscos_1781339688351.jpg";
-import causaAcevichada from "./assets/images/causa_acevichada_1781341093495.jpg";
-import chicharronPescado from "./assets/images/chicharron_pescado_1781563544480.jpg";
+import arrozMariscos from "./assets/images/arroz_mariscos_1781339688351.webp";
+import causaAcevichada from "./assets/images/causa_acevichada_1781341093495.webp";
+import chicharronPescado from "./assets/images/chicharron_pescado_1781563544480.webp";
 
 export const SEDES: Sede[] = [
   {
@@ -207,7 +207,7 @@ export const DISHES: Dish[] = [
     price: 38.90,
     description: "Arroz saltado a fuego fuerte (al reviente del wok) con trozos de pescado crujiente sazonado, cebollita de verdeo, tortilla de huevo y aceite de ajonjolí auténtico.",
     category: "fondos",
-    image: "https://images.unsplash.com/photo-1512058564366-18510be2db19?auto=format&fit=crop&w=600&q=80",
+    image: "https://images.unsplash.com/photo-1512058564366-18510be2db19?auto=format&fit=crop&w=500&q=75&fm=webp",
     alergenos: ["mariscos", "gluten"]
   },
   {
@@ -253,7 +253,7 @@ export const DISHES: Dish[] = [
     price: 39.90,
     description: "Fresco filete de pescado de estación sellado a la plancha con finas hierbas y ajo, acompañado de arroz blanco graneadito and ensalada fresca del huerto.",
     category: "fondos",
-    image: "https://images.unsplash.com/photo-1519708227418-c8fd9a32b7a2?auto=format&fit=crop&w=600&q=80",
+    image: "https://images.unsplash.com/photo-1519708227418-c8fd9a32b7a2?auto=format&fit=crop&w=500&q=75&fm=webp",
     noSpicy: true,
     alergenos: ["mariscos"]
   },
@@ -456,7 +456,7 @@ export const DISHES: Dish[] = [
     price: 6.00,
     description: "Agua de mesa gasificada de 350ml, ideal para acompañar tus ceviches con harto limón.",
     category: "bebidas",
-    image: "https://images.unsplash.com/photo-1608885898957-947a50616b25?auto=format&fit=crop&w=600&q=80",
+    image: "https://images.unsplash.com/photo-1608885898957-947a50616b25?auto=format&fit=crop&w=500&q=75&fm=webp",
     noSpicy: true
   },
   {
@@ -465,7 +465,7 @@ export const DISHES: Dish[] = [
     price: 6.00,
     description: "Agua de mesa pura sin gas, fresca y ligera de 350ml para refrescar tu paladar.",
     category: "bebidas",
-    image: "https://images.unsplash.com/photo-1548839140-29a749e1cf4d?auto=format&fit=crop&w=600&q=80",
+    image: "https://images.unsplash.com/photo-1548839140-29a749e1cf4d?auto=format&fit=crop&w=500&q=75&fm=webp",
     noSpicy: true
   },
   {
@@ -474,7 +474,7 @@ export const DISHES: Dish[] = [
     price: 6.50,
     description: "La gaseosa clásica helada de 300ml en original presentación de vidrio/lata para maridar tu sabroso plato.",
     category: "bebidas",
-    image: "https://images.unsplash.com/photo-1622483767028-3f66f32aef97?auto=format&fit=crop&w=600&q=80",
+    image: "https://images.unsplash.com/photo-1622483767028-3f66f32aef97?auto=format&fit=crop&w=500&q=75&fm=webp",
     noSpicy: true
   },
   {
@@ -483,7 +483,7 @@ export const DISHES: Dish[] = [
     price: 6.50,
     description: "El inconfundible sabor refrescante de siempre, helada de receta Zero azúcar (300ml).",
     category: "bebidas",
-    image: "https://images.unsplash.com/photo-1554866585-cd94860890b7?auto=format&fit=crop&w=600&q=80",
+    image: "https://images.unsplash.com/photo-1554866585-cd94860890b7?auto=format&fit=crop&w=500&q=75&fm=webp",
     noSpicy: true
   },
   {
@@ -492,7 +492,7 @@ export const DISHES: Dish[] = [
     price: 6.50,
     description: "La compañera dorada indiscutible de nuestra gastronomía. Gaseosa nacional heladita de 300ml.",
     category: "bebidas",
-    image: "https://images.unsplash.com/photo-1621263764928-df1444c5e859?auto=format&fit=crop&w=600&q=80",
+    image: "https://images.unsplash.com/photo-1621263764928-df1444c5e859?auto=format&fit=crop&w=500&q=75&fm=webp",
     noSpicy: true
   },
   {
@@ -501,7 +501,7 @@ export const DISHES: Dish[] = [
     price: 6.50,
     description: "El inconfundible sabor nacional en su balanceada versión Zero azúcar y calorías (300ml).",
     category: "bebidas",
-    image: "https://images.unsplash.com/photo-1554866585-cd94860890b7?auto=format&fit=crop&w=600&q=80",
+    image: "https://images.unsplash.com/photo-1554866585-cd94860890b7?auto=format&fit=crop&w=500&q=75&fm=webp",
     noSpicy: true
   },
   {
@@ -510,7 +510,7 @@ export const DISHES: Dish[] = [
     price: 18.90,
     description: "Exquisita receta de chicha de la casa, hervida con maíz morado, piña, manzana clavo y canela. Botella de 1 litro.",
     category: "bebidas",
-    image: "https://images.unsplash.com/photo-1513558161293-cdaf765ed2fd?auto=format&fit=crop&w=600&q=80",
+    image: "https://images.unsplash.com/photo-1513558161293-cdaf765ed2fd?auto=format&fit=crop&w=500&q=75&fm=webp",
     isRecommended: true,
     badge: "Casera",
     noSpicy: true
@@ -524,7 +524,7 @@ export const DISHES: Dish[] = [
     description: "Clásica y húmeda torta de cacao puro peruano al 70%, rellena generosamente con manjar blanco de olla artesanal y cubierta con fudge espeso.",
     category: "postres",
     isRecommended: true,
-    image: "https://images.unsplash.com/photo-1578985545062-69928b1d9587?auto=format&fit=crop&w=600&q=80",
+    image: "https://images.unsplash.com/photo-1578985545062-69928b1d9587?auto=format&fit=crop&w=500&q=75&fm=webp",
     badge: "Artesanal",
     noSpicy: true,
     alergenos: ["gluten", "lacteos"]
@@ -535,7 +535,7 @@ export const DISHES: Dish[] = [
     price: 17.00,
     description: "Base crocante de galleta de vainilla, relleno cítrico premium de limón norteño sutil y un merengue suizo dorado al soplete.",
     category: "postres",
-    image: "https://images.unsplash.com/photo-1519869325930-281384150729?auto=format&fit=crop&w=600&q=80",
+    image: "https://images.unsplash.com/photo-1519869325930-281384150729?auto=format&fit=crop&w=500&q=75&fm=webp",
     noSpicy: true,
     alergenos: ["gluten", "lacteos"]
   },
@@ -545,7 +545,7 @@ export const DISHES: Dish[] = [
     price: 19.00,
     description: "Textura cremosa fría sobre base de galleta con mantequilla andina, coronada con compota casera reducida de fresas, arándanos y frambuesas jugosas.",
     category: "postres",
-    image: "https://images.unsplash.com/photo-1533134242443-d4fd215305ad?auto=format&fit=crop&w=600&q=80",
+    image: "https://images.unsplash.com/photo-1533134242443-d4fd215305ad?auto=format&fit=crop&w=500&q=75&fm=webp",
     badge: "Nuevo",
     noSpicy: true,
     alergenos: ["gluten", "lacteos"]

@@ -10,7 +10,7 @@ const SUGGESTED_ADDONS: Dish[] = [
     price: 8.50,
     description: "Néctar casero de maíz morado, piña, manzana, canela, clavo de olor y gotas de limón norteño.",
     category: "bebidas",
-    image: "https://images.unsplash.com/photo-1546069901-ba9599a7e63c?auto=format&fit=crop&w=300&q=80",
+    image: "https://images.unsplash.com/photo-1546069901-ba9599a7e63c?auto=format&fit=crop&w=300&q=75&fm=webp",
     noSpicy: true,
   },
   {
@@ -19,7 +19,7 @@ const SUGGESTED_ADDONS: Dish[] = [
     price: 19.50,
     description: "La jarra helada favorita del terminal, ideal para compartir en mesa salvaje.",
     category: "bebidas",
-    image: "https://images.unsplash.com/photo-1513558161293-cdaf765ed2fd?auto=format&fit=crop&w=300&q=80",
+    image: "https://images.unsplash.com/photo-1513558161293-cdaf765ed2fd?auto=format&fit=crop&w=300&q=75&fm=webp",
     noSpicy: true,
   },
   {
@@ -28,7 +28,7 @@ const SUGGESTED_ADDONS: Dish[] = [
     price: 18.00,
     description: "Clásica y húmeda torta de cacao puro peruano al 70%, con harto manjar blanco.",
     category: "postres",
-    image: "https://images.unsplash.com/photo-1578985545062-69928b1d9587?auto=format&fit=crop&w=300&q=80",
+    image: "https://images.unsplash.com/photo-1578985545062-69928b1d9587?auto=format&fit=crop&w=300&q=75&fm=webp",
     noSpicy: true,
   },
   {
@@ -37,7 +37,7 @@ const SUGGESTED_ADDONS: Dish[] = [
     price: 17.00,
     description: "Crema cítrica premium de limón norteño sobre base crocante y merengue suizo.",
     category: "postres",
-    image: "https://images.unsplash.com/photo-1519869325930-281384150729?auto=format&fit=crop&w=300&q=80",
+    image: "https://images.unsplash.com/photo-1519869325930-281384150729?auto=format&fit=crop&w=300&q=75&fm=webp",
     noSpicy: true,
   }
 ];
@@ -318,9 +318,10 @@ export default function CartDrawer({
                           alt={item.dish.name}
                           className="w-full h-full object-cover"
                           loading="lazy"
+                          decoding="async"
                           onError={(e) => {
                             (e.target as HTMLImageElement).src =
-                              "https://images.unsplash.com/photo-1546069901-ba9599a7e63c?auto=format&fit=crop&w=150&q=80";
+                              "https://images.unsplash.com/photo-1546069901-ba9599a7e63c?auto=format&fit=crop&w=150&q=75&fm=webp";
                           }}
                         />
                       </div>

@@ -4,6 +4,34 @@
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <title>Terminal Pesquero | Tradición y Frescura Marina</title>
+    <meta name="description" content="Página web interactiva y sistema de pedidos para la cevichería peruana Terminal Pesquero." />
+    <meta property="og:title" content="Terminal Pesquero | Tradición y Frescura Marina" />
+    <meta property="og:description" content="Página web interactiva y sistema de pedidos para la cevichería peruana Terminal Pesquero." />
+
+    <!-- Fix for Chrome Extension request interceptors assigning to window.fetch -->
+    <script>
+      (function () {
+        try {
+          var _fetch = window.fetch ? window.fetch.bind(window) : undefined;
+          Object.defineProperty(window, "fetch", {
+            get: function () {
+              return _fetch;
+            },
+            set: function (newFetch) {
+              _fetch = newFetch;
+            },
+            configurable: true,
+            enumerable: true,
+          });
+        } catch (err) {}
+      })();
+    </script>
+
+    <!-- Performance Preconnections for Mobile Speed -->
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link rel="preconnect" href="https://images.unsplash.com" />
+
     <!-- Google Fonts -->
     <link href="https://fonts.googleapis.com/css2?family=Hanken+Grotesk:wght@400;500;600;700&family=Vollkorn:wght@400;600;700;900&display=swap" rel="stylesheet" />
     <!-- Material Symbols -->
@@ -12,6 +40,18 @@
   <body class="bg-[#F9F6F2] text-[#1c1c1a]">
     <div id="root"></div>
     <script type="module" src="/src/main.tsx"></script>
+
+    <!-- Register Service Worker for Instant Image & Asset Caching on Mobile -->
+    <script>
+      if ("serviceWorker" in navigator) {
+        window.addEventListener("load", function () {
+          var swPath = "./sw.js";
+          navigator.serviceWorker
+            .register(swPath)
+            .catch(function () {});
+        });
+      }
+    </script>
   </body>
 </html>
 

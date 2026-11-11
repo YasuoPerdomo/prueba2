@@ -53,17 +53,22 @@ export default function DishCard({ dish, onAddToCart, isClosed = false }: DishCa
           alt={dish.name}
           className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-700"
           loading="lazy"
+          decoding="async"
           onError={(e) => {
             (e.target as HTMLImageElement).src =
-              "https://images.unsplash.com/photo-1546069901-ba9599a7e63c?auto=format&fit=crop&w=350&q=80";
+              "https://images.unsplash.com/photo-1546069901-ba9599a7e63c?auto=format&fit=crop&w=350&q=75&fm=webp";
           }}
         />
         
-        {label && (
+        {dish.isAvailable === false ? (
+          <span className="absolute top-3 left-3 text-[10px] font-bold uppercase tracking-wider px-2.5 py-1 rounded-full shadow-sm bg-red-600 text-white">
+            Agotado
+          </span>
+        ) : label ? (
           <span className={`absolute top-3 left-3 text-[10px] font-bold uppercase tracking-wider px-2.5 py-1 rounded-full shadow-sm ${getBadgeStyles()}`}>
             {label}
           </span>
-        )}
+        ) : null}
       </div>
 
       {/* Description Content Box */}
@@ -158,22 +163,24 @@ export default function DishCard({ dish, onAddToCart, isClosed = false }: DishCa
         {/* Actions Row */}
         <div className="pt-3 border-t border-gray-50 shrink-0">
           <button
-            disabled={isClosed}
+            disabled={isClosed || dish.isAvailable === false}
             onClick={() => {
-              if (isClosed) return;
+              if (isClosed || dish.isAvailable === false) return;
               const hasSpicy = !dish.noSpicy && dish.category !== "postres" && dish.category !== "bebidas";
               onAddToCart(dish, hasSpicy ? spicyLevel : undefined);
             }}
             className={`w-full py-2.5 font-bold text-xs uppercase tracking-wider rounded-xl transition-all flex items-center justify-center gap-1.5 active:scale-98 ${
-              isClosed
+              dish.isAvailable === false
+                ? "bg-gray-100 border-2 border-gray-200 text-gray-400 cursor-not-allowed"
+                : isClosed
                 ? "bg-gray-100 border-2 border-gray-200 text-gray-400 cursor-not-allowed"
                 : "bg-white border-2 border-ocean-deep text-ocean-deep hover:bg-ocean-deep hover:text-white cursor-pointer"
             }`}
           >
             <span className="material-symbols-outlined text-[17px]">
-              {isClosed ? "lock_clock" : "add_shopping_cart"}
+              {dish.isAvailable === false ? "block" : isClosed ? "lock_clock" : "add_shopping_cart"}
             </span>
-            {isClosed ? "Fuera de Horario" : "Añadir al pedido"}
+            {dish.isAvailable === false ? "Agotado temporalmente" : isClosed ? "Fuera de Horario" : "Añadir al pedido"}
           </button>
         </div>
       </div>

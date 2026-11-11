@@ -43,6 +43,7 @@ export default function SpecialtiesSection({
             alt="Arroz con Mariscos"
             className="w-full h-full object-cover group-hover:scale-102 transition-transform duration-700"
             loading="lazy"
+            decoding="async"
           />
           <div className="absolute bottom-0 left-0 p-6 md:p-8 z-20 w-full text-left">
             <span className="bg-shell-pink text-ocean-deep px-3 py-1 rounded-full text-[10px] font-bold uppercase tracking-wider block w-max mb-3">
@@ -80,6 +81,7 @@ export default function SpecialtiesSection({
               referrerPolicy="no-referrer"
               className="w-full h-full object-cover transition-transform duration-700 group-hover:scale-105"
               loading="lazy"
+              decoding="async"
             />
           </div>
           
@@ -122,6 +124,7 @@ export default function SpecialtiesSection({
             referrerPolicy="no-referrer"
             className="absolute inset-0 w-full h-full object-cover object-right group-hover:scale-102 transition-transform duration-700"
             loading="lazy"
+            decoding="async"
           />
           <div className="relative z-20 p-6 md:p-8 text-left max-w-md">
             <h3 className="font-display text-2xl font-bold text-white mb-2">

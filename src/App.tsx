@@ -2,11 +2,11 @@ import React, { useState, useEffect } from "react";
 import { motion, AnimatePresence } from "motion/react";
 import { Sede, Dish, CartItem } from "./types";
 import { SEDES, DISHES } from "./data";
-import heroCeviche from "./assets/images/hero_ceviche_1781339366808.jpg";
-import arrozMariscos from "./assets/images/arroz_mariscos_1781339688351.jpg";
-import causaAcevichada from "./assets/images/causa_acevichada_1781341093495.jpg";
-import chicharronPescado from "./assets/images/chicharron_pescado_1781563544480.jpg";
-import equipoSalon from "./assets/images/equipo_salon_1781563781348.jpg";
+import heroCeviche from "./assets/images/hero_ceviche_1781339366808.webp";
+import arrozMariscos from "./assets/images/arroz_mariscos_1781339688351.webp";
+import causaAcevichada from "./assets/images/causa_acevichada_1781341093495.webp";
+import chicharronPescado from "./assets/images/chicharron_pescado_1781563544480.webp";
+import equipoSalon from "./assets/images/equipo_salon_1781563781348.webp";
 
 // Components
 import Navbar from "./components/Navbar";
@@ -16,6 +16,7 @@ import CartDrawer from "./components/CartDrawer";
 import DishCard from "./components/DishCard";
 import CustomToast from "./components/CustomToast";
 import ReservationModal from "./components/ReservationModal";
+import AdminPanelModal from "./components/AdminPanelModal";
 
 // Modular Home Sections
 import HeroSection from "./components/home/HeroSection";
@@ -80,6 +81,31 @@ export default function App() {
       return false;
     }
   });
+
+  // Dishes Catalog state with local persistence for Admin additions & deletions
+  const [dishes, setDishes] = useState<Dish[]>(() => {
+    try {
+      const saved = localStorage.getItem("tp_custom_dishes");
+      if (saved) {
+        const parsed = JSON.parse(saved);
+        if (Array.isArray(parsed) && parsed.length > 0) return parsed;
+      }
+    } catch (e) {
+      console.error("Error reading tp_custom_dishes", e);
+    }
+    return DISHES;
+  });
+
+  const handleUpdateDishes = (newDishes: Dish[]) => {
+    setDishes(newDishes);
+    try {
+      localStorage.setItem("tp_custom_dishes", JSON.stringify(newDishes));
+    } catch (e) {
+      console.error("Error saving tp_custom_dishes", e);
+    }
+  };
+
+  const [isAdminModalOpen, setIsAdminModalOpen] = useState(false);
 
   // Table reservation state variables
   const [isReservationOpen, setIsReservationOpen] = useState(false);
@@ -263,7 +289,7 @@ export default function App() {
   };
 
   // Filtering Menu
-  const filteredDishes = DISHES.filter(dish => {
+  const filteredDishes = dishes.filter(dish => {
     const matchesSearch = dish.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
                           dish.description.toLowerCase().includes(searchQuery.toLowerCase());
     const matchesCategory = activeCategory === "todos" || dish.category === activeCategory;
@@ -291,6 +317,8 @@ export default function App() {
         onChangeBranch={() => setIsBranchModalOpen(true)}
         isClosed={isClosed}
         onOpenReservation={() => handleOpenReservation()}
+        isAdmin={isAdmin}
+        onOpenAdmin={() => setIsAdminModalOpen(true)}
       />
 
       <main className="flex-grow">
@@ -350,10 +378,11 @@ export default function App() {
                 <div className="absolute inset-0 z-0">
                   <div className="absolute inset-0 bg-gradient-to-r from-ocean-deep/90 index-50 to-ocean-deep/50 mix-blend-multiply" />
                   <img
-                    src="https://images.unsplash.com/photo-1546069901-ba9599a7e63c?auto=format&fit=crop&w=1200&q=80"
+                    src="https://images.unsplash.com/photo-1546069901-ba9599a7e63c?auto=format&fit=crop&w=800&q=75&fm=webp"
                     alt="Ceviche de conchas"
                     className="w-full h-full object-cover"
                     loading="lazy"
+                    decoding="async"
                   />
                 </div>
                 <div className="relative z-10 text-center max-w-xl">
@@ -578,7 +607,14 @@ export default function App() {
         {/* copyright metadata */}
         <div className="border-t border-white/10 py-6 px-4 max-w-7xl mx-auto flex flex-col md:flex-row justify-between items-center gap-3 text-[11px] text-gray-400 font-semibold uppercase tracking-wider">
           <span>© 2024 Terminal Pesquero. Todos los derechos reservados. Sabor de altamar.</span>
-          <div className="flex gap-4">
+          <div className="flex items-center gap-4">
+            <button
+              onClick={() => setIsAdminModalOpen(true)}
+              className="text-sunset-coral hover:text-white flex items-center gap-1 transition-colors cursor-pointer capitalize"
+            >
+              <span className="material-symbols-outlined text-[15px]">admin_panel_settings</span>
+              <span>{isAdmin ? "Panel Admin" : "Acceso Admin"}</span>
+            </button>
             <a href="#" className="hover:text-white">Términos y condiciones</a>
             <a href="#" className="hover:text-white">Política de Privacidad</a>
           </div>
@@ -639,6 +675,13 @@ export default function App() {
           </div>
           <span className="text-gray-500">|</span>
           <button
+            onClick={() => setIsAdminModalOpen(true)}
+            className="text-white hover:text-sunset-coral font-bold uppercase tracking-wider text-[10px] transition-colors cursor-pointer flex items-center gap-1"
+          >
+            <span>Panel ⚙️</span>
+          </button>
+          <span className="text-gray-500">|</span>
+          <button
             onClick={() => {
               localStorage.setItem("tp_admin_mode", "false");
               setIsAdmin(false);
@@ -650,6 +693,20 @@ export default function App() {
           </button>
         </div>
       )}
+
+      {/* Creator Admin Panel Modal */}
+      <AdminPanelModal
+        isOpen={isAdminModalOpen}
+        onClose={() => setIsAdminModalOpen(false)}
+        isAdmin={isAdmin}
+        onToggleAdmin={(val) => {
+          setIsAdmin(val);
+          localStorage.setItem("tp_admin_mode", val ? "true" : "false");
+        }}
+        dishes={dishes}
+        onUpdateDishes={handleUpdateDishes}
+        onShowToast={showToast}
+      />
     </div>
   );
 }

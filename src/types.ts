@@ -12,6 +12,7 @@ export interface Dish {
   badge?: string;
   noSpicy?: boolean;
   alergenos?: string[];
+  isAvailable?: boolean;
 }
 
 export interface CartItem {

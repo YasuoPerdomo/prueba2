@@ -10,6 +10,8 @@ interface NavbarProps {
   onChangeBranch: () => void;
   isClosed?: boolean;
   onOpenReservation?: () => void;
+  isAdmin?: boolean;
+  onOpenAdmin?: () => void;
 }
 
 export default function Navbar({
@@ -21,6 +23,8 @@ export default function Navbar({
   onChangeBranch,
   isClosed = false,
   onOpenReservation,
+  isAdmin = false,
+  onOpenAdmin,
 }: NavbarProps) {
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
 
@@ -119,6 +123,24 @@ export default function Navbar({
             </button>
           )}
 
+          {/* Admin Access Button */}
+          {onOpenAdmin && (
+            <button
+              onClick={onOpenAdmin}
+              title={isAdmin ? "Panel de Administrador" : "Acceso Creador / Admin"}
+              className={`p-2 rounded-xl transition-all cursor-pointer flex items-center gap-1 text-xs font-bold ${
+                isAdmin
+                  ? "bg-amber-500/10 border border-amber-500/30 text-sunset-coral hover:bg-amber-500/20"
+                  : "text-gray-400 hover:text-ocean-deep hover:bg-gray-100"
+              }`}
+            >
+              <span className="material-symbols-outlined text-[20px]">
+                {isAdmin ? "admin_panel_settings" : "shield_person"}
+              </span>
+              <span className="hidden xl:inline">{isAdmin ? "Panel Admin" : "Admin"}</span>
+            </button>
+          )}
+
           {/* Cart Toggle button */}
           <button
             onClick={onToggleCart}
@@ -205,6 +227,19 @@ export default function Navbar({
                 <span>{sede.emoji}</span>
                 <span>Ubicación seleccionada: {sede.suffix}</span>
                 <span className="font-bold underline text-coastal-teal ml-auto">Cambiar</span>
+              </button>
+            )}
+
+            {onOpenAdmin && (
+              <button
+                onClick={() => {
+                  onOpenAdmin();
+                  setMobileMenuOpen(false);
+                }}
+                className="w-full text-left py-2.5 px-3 rounded-lg font-bold text-xs tracking-wide text-sunset-coral bg-amber-500/10 border border-amber-500/20 flex items-center gap-2 cursor-pointer"
+              >
+                <span className="material-symbols-outlined text-[18px]">admin_panel_settings</span>
+                <span>{isAdmin ? "Panel de Administrador (Activo)" : "Acceso Administrador / Creador"}</span>
               </button>
             )}
 
