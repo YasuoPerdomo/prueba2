@@ -12,7 +12,6 @@ interface NavbarProps {
   onOpenReservation?: () => void;
   isAdmin?: boolean;
   onOpenAdmin?: () => void;
-  onOpenLibro?: () => void;
 }
 
 export default function Navbar({
@@ -26,7 +25,6 @@ export default function Navbar({
   onOpenReservation,
   isAdmin = false,
   onOpenAdmin,
-  onOpenLibro,
 }: NavbarProps) {
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
 
@@ -109,17 +107,6 @@ export default function Navbar({
           >
             Eventos
           </a>
-
-          {onOpenLibro && (
-            <button
-              onClick={onOpenLibro}
-              className="text-gray-600 hover:text-ocean-deep font-bold tracking-wide text-xs transition-all flex items-center gap-1.5 cursor-pointer py-1.5 px-3 rounded-full bg-amber-500/10 border border-amber-500/20 hover:bg-amber-500/20 shadow-2xs"
-              title="Libro de Reclamaciones Virtual - Ley N° 29571"
-            >
-              <span className="material-symbols-outlined text-[17px] text-sunset-coral">menu_book</span>
-              <span>Libro de Reclamaciones</span>
-            </button>
-          )}
         </div>
 
         {/* Action Widgets */}
@@ -227,22 +214,6 @@ export default function Navbar({
             <span className="material-symbols-outlined text-[18px] text-[#EFA351]">table_restaurant</span>
             <span>Reservar Mesa</span>
           </button>
-
-          {onOpenLibro && (
-            <button
-              onClick={() => {
-                onOpenLibro();
-                setMobileMenuOpen(false);
-              }}
-              className="w-full text-left py-2 px-3 rounded-lg font-bold text-sm tracking-wide text-ocean-deep bg-amber-500/10 border border-amber-500/20 flex items-center gap-2 cursor-pointer shadow-2xs"
-            >
-              <span className="material-symbols-outlined text-[19px] text-sunset-coral">menu_book</span>
-              <span>Libro de Reclamaciones</span>
-              <span className="ml-auto text-[9px] uppercase font-black bg-sunset-coral text-white px-2 py-0.5 rounded-full">
-                Virtual
-              </span>
-            </button>
-          )}
 
           <div className="border-t border-gray-100 pt-3 flex flex-col gap-2">
             {sede && (

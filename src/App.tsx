@@ -385,7 +385,6 @@ export default function App() {
         onOpenReservation={() => handleOpenReservation()}
         isAdmin={isAdmin}
         onOpenAdmin={() => setIsAdminModalOpen(true)}
-        onOpenLibro={() => setIsLibroModalOpen(true)}
       />
 
       <main className="flex-grow">
@@ -705,15 +704,7 @@ export default function App() {
         {/* copyright metadata */}
         <div className="border-t border-white/10 py-6 px-4 max-w-7xl mx-auto flex flex-col md:flex-row justify-between items-center gap-3 text-[11px] text-gray-400 font-semibold uppercase tracking-wider">
           <span>© 2024 Terminal Pesquero. Todos los derechos reservados. Sabor de altamar.</span>
-          <div className="flex flex-wrap items-center gap-3">
-            <button
-              onClick={() => setIsLibroModalOpen(true)}
-              className="bg-white/10 hover:bg-white/20 px-3 py-1 rounded-full text-sunset-coral hover:text-white font-extrabold flex items-center gap-1.5 transition-colors cursor-pointer border border-white/20"
-            >
-              <span className="material-symbols-outlined text-[15px] text-sunset-coral">menu_book</span>
-              <span>Libro de Reclamaciones</span>
-            </button>
-            <span className="text-gray-600">|</span>
+          <div className="flex flex-wrap items-center gap-4">
             <button
               onClick={() => setIsAdminModalOpen(true)}
               className="text-sunset-coral hover:text-white flex items-center gap-1 transition-colors cursor-pointer capitalize"
