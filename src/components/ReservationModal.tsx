@@ -29,6 +29,7 @@ export default function ReservationModal({
   const [time, setTime] = useState("");
   const [guests, setGuests] = useState("4");
   const [notes, setNotes] = useState("");
+  const [formError, setFormError] = useState("");
 
   // Sync Sede when modal is opened with preselected branch
   useEffect(() => {
@@ -58,19 +59,21 @@ export default function ReservationModal({
 
     const currentSede = SEDES.find((s) => s.id === sedeId);
     if (!currentSede) {
-      alert("Por favor elige una sede para tu reserva.");
+      setFormError("Por favor elige una sede para tu reserva.");
       return;
     }
 
     if (!customerName.trim()) {
-      alert("Por favor, ingresa tu Nombre para la reserva.");
+      setFormError("Por favor, ingresa tu Nombre para la reserva.");
       return;
     }
 
     if (!date || !time) {
-      alert("Por favor, selecciona una Fecha y Hora válidas.");
+      setFormError("Por favor, selecciona una Fecha y Hora válidas.");
       return;
     }
+
+    setFormError("");
 
     // Save Name to improve future deliveries and reservations
     try {
@@ -286,6 +289,14 @@ export default function ReservationModal({
                     className="w-full px-3.5 py-2 bg-gray-50 border border-gray-200 rounded-xl text-xs font-semibold focus:outline-none focus:border-coastal-teal shadow-2xs"
                   />
                 </div>
+
+                {/* Error Banner */}
+                {formError && (
+                  <div className="bg-red-50 text-red-700 border border-red-200 px-3 py-2 rounded-xl text-xs font-bold text-center animate-fade-in flex items-center justify-center gap-1.5">
+                    <span className="material-symbols-outlined text-sm">warning</span>
+                    <span>{formError}</span>
+                  </div>
+                )}
 
                 {/* Submit Action */}
                 <div className="pt-3 border-t border-gray-100 flex gap-3 text-xs font-bold">

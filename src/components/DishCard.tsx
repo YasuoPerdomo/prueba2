@@ -10,7 +10,6 @@ const ALLERGENS_MAP: Record<string, { label: string; emoji: string; color: strin
 };
 
 interface DishCardProps {
-  key?: string;
   dish: Dish;
   onAddToCart: (dish: Dish, spicyLevel?: 'bajo' | 'medio' | 'alto') => void;
   isClosed?: boolean;

@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from "react";
 import { motion, AnimatePresence } from "motion/react";
-import { Sede, Dish, CartItem } from "./types";
+import { Sede, Dish, CartItem, BusinessSchedule } from "./types";
 import { SEDES, DISHES } from "./data";
 import heroCeviche from "./assets/images/hero_ceviche_1781339366808.webp";
 import arrozMariscos from "./assets/images/arroz_mariscos_1781339688351.webp";
@@ -17,6 +17,7 @@ import DishCard from "./components/DishCard";
 import CustomToast from "./components/CustomToast";
 import ReservationModal from "./components/ReservationModal";
 import AdminPanelModal from "./components/AdminPanelModal";
+import LibroReclamacionesModal from "./components/LibroReclamacionesModal";
 
 // Modular Home Sections
 import HeroSection from "./components/home/HeroSection";
@@ -38,6 +39,14 @@ const containerVariants = {
 const itemVariants = {
   hidden: { opacity: 0, y: 15 },
   show: { opacity: 1, y: 0, transition: { type: "spring", stiffness: 100, damping: 15 } },
+};
+
+const DEFAULT_SCHEDULE: BusinessSchedule = {
+  weekdayOpen: "12:00",
+  weekdayClose: "16:30",
+  weekendOpen: "12:00",
+  weekendClose: "17:00",
+  manualOverride: "auto",
 };
 
 export default function App() {
@@ -111,14 +120,60 @@ export default function App() {
   const [isReservationOpen, setIsReservationOpen] = useState(false);
   const [reservationPreSede, setReservationPreSede] = useState<Sede | null>(null);
 
+  // Libro de Reclamaciones state
+  const [isLibroModalOpen, setIsLibroModalOpen] = useState(false);
+
   const handleOpenReservation = (preselected?: Sede | null) => {
     setReservationPreSede(preselected || selectedSede);
     setIsReservationOpen(true);
   };
 
-  // Check if restaurant is closed based on current local device time
+  // Business Schedule configuration state (editable by Admin)
+  const [schedule, setSchedule] = useState<BusinessSchedule>(() => {
+    try {
+      const saved = localStorage.getItem("tp_business_schedule");
+      if (saved) {
+        const parsed = JSON.parse(saved);
+        if (parsed.weekdayOpen && parsed.weekdayClose) return parsed;
+      }
+    } catch (e) {
+      console.error("Error reading tp_business_schedule", e);
+    }
+    return DEFAULT_SCHEDULE;
+  });
+
+  const handleUpdateSchedule = (newSchedule: BusinessSchedule) => {
+    setSchedule(newSchedule);
+    try {
+      localStorage.setItem("tp_business_schedule", JSON.stringify(newSchedule));
+    } catch (e) {
+      console.error("Error saving tp_business_schedule", e);
+    }
+  };
+
+  const parseTimeToMinutes = (timeStr?: string): number => {
+    if (!timeStr) return 0;
+    const [h, m] = timeStr.split(":").map(Number);
+    return (h || 0) * 60 + (m || 0);
+  };
+
+  const formatTime12h = (timeStr?: string): string => {
+    if (!timeStr) return "";
+    const [hStr, mStr] = timeStr.split(":");
+    let h = parseInt(hStr, 10);
+    const m = parseInt(mStr, 10) || 0;
+    const ampm = h >= 12 ? "PM" : "AM";
+    h = h % 12;
+    h = h ? h : 12;
+    const minFormatted = m < 10 ? `0${m}` : `${m}`;
+    return `${h}:${minFormatted} ${ampm}`;
+  };
+
+  // Check if restaurant is closed based on schedule and manual override
   const checkIfClosed = (): boolean => {
     if (isAdmin) return false;
+    if (schedule.manualOverride === "always_open") return false;
+    if (schedule.manualOverride === "always_closed") return true;
 
     const now = new Date();
     const day = now.getDay(); // 0 = Sunday, 1 = Monday, ..., 6 = Saturday
@@ -126,12 +181,9 @@ export default function App() {
     const minutes = now.getMinutes();
     const currentTimeInMinutes = hours * 60 + minutes;
 
-    // Lunes a Jueves: 12:00 PM a 4:30 PM (720 min a 990 min)
-    // Viernes a Domingo: 12:00 PM a 5:00 PM (720 min a 1020 min)
     const isWeekend = day === 0 || day === 5 || day === 6; // Sun, Fri, Sat
-    
-    const openTime = 12 * 60; // 12:00 PM (720 min)
-    const closeTime = isWeekend ? (17 * 60) : (16 * 60 + 30); // 17:00 (1020 min) vs 16:30 (990 min)
+    const openTime = parseTimeToMinutes(isWeekend ? schedule.weekendOpen : schedule.weekdayOpen);
+    const closeTime = parseTimeToMinutes(isWeekend ? schedule.weekendClose : schedule.weekdayClose);
 
     return currentTimeInMinutes < openTime || currentTimeInMinutes >= closeTime;
   };
@@ -144,25 +196,39 @@ export default function App() {
     const currentTimeInMinutes = hours * 60 + minutes;
 
     const isWeekend = day === 0 || day === 5 || day === 6;
-    const openTime = 12 * 60; // 12:00 PM
+    const openTimeStr = isWeekend ? schedule.weekendOpen : schedule.weekdayOpen;
+    const openTimeMin = parseTimeToMinutes(openTimeStr);
 
-    const scheduleStr = "Lunes a Jueves de 12:00 PM a 4:30 PM & Viernes a Domingo de 12:00 PM a 5:00 PM";
+    const scheduleStr = `Lunes a Jueves de ${formatTime12h(schedule.weekdayOpen)} a ${formatTime12h(schedule.weekdayClose)} & Viernes a Domingo de ${formatTime12h(schedule.weekendOpen)} a ${formatTime12h(schedule.weekendClose)}`;
 
-    if (currentTimeInMinutes < openTime) {
+    if (schedule.manualOverride === "always_closed") {
+      return {
+        title: "Cocina pausada temporalmente por el Administrador",
+        message: "Nuestra cocina ha pausado la recepción de pedidos web de manera momentánea por mantenimiento, evento privado o reposición de pesca fresca.",
+        badge: "Cerrado por Administración",
+        nextOpen: "Próximamente",
+        hours: scheduleStr,
+      };
+    }
+
+    if (currentTimeInMinutes < openTimeMin) {
       return {
         title: "¡La cocina de Terminal Pesquero se está preparando!",
         message: "Actualmente nos encontramos cerrados afinando el sabor y recibiendo la pesca del día más fresca del litoral.",
         badge: "Cerrado temporalmente",
-        nextOpen: "Hoy a las 12:00 PM",
-        hours: scheduleStr
+        nextOpen: `Hoy a las ${formatTime12h(openTimeStr)}`,
+        hours: scheduleStr,
       };
     } else {
+      const nextDay = (day + 1) % 7;
+      const nextIsWeekend = nextDay === 0 || nextDay === 5 || nextDay === 6;
+      const nextOpenStr = nextIsWeekend ? schedule.weekendOpen : schedule.weekdayOpen;
       return {
         title: "¡Hasta mañana, marinero! La cocina ha cerrado",
         message: "Nuestra cocina cerró sus fuegos por hoy para garantizar que cada ingrediente servido sea de la máxima frescura del día. ¡Te esperamos mañana para deleitarte!",
         badge: "Servicio finalizado por hoy",
-        nextOpen: "Mañana a las 12:00 PM",
-        hours: scheduleStr
+        nextOpen: `Mañana a las ${formatTime12h(nextOpenStr)}`,
+        hours: scheduleStr,
       };
     }
   };
@@ -192,7 +258,7 @@ export default function App() {
       setIsClosed(checkIfClosed());
     }, 10000);
     return () => clearInterval(interval);
-  }, [isAdmin]);
+  }, [isAdmin, schedule]);
 
   useEffect(() => {
     const params = new URLSearchParams(window.location.search);
@@ -319,6 +385,7 @@ export default function App() {
         onOpenReservation={() => handleOpenReservation()}
         isAdmin={isAdmin}
         onOpenAdmin={() => setIsAdminModalOpen(true)}
+        onOpenLibro={() => setIsLibroModalOpen(true)}
       />
 
       <main className="flex-grow">
@@ -450,7 +517,7 @@ export default function App() {
                           <div className="flex items-center gap-2.5 bg-amber-500/10 border border-amber-500/20 px-3.5 py-1.5 rounded-xl text-amber-950">
                             <span className="w-2.5 h-2.5 rounded-full bg-red-600 animate-pulse" />
                             <span className="text-[10px] font-black uppercase tracking-wider">
-                              Los pedidos web se habilitarán a las 12:00 PM
+                              Los pedidos web se habilitarán: {info.nextOpen}
                             </span>
                           </div>
                         </div>
@@ -596,18 +663,57 @@ export default function App() {
               href="https://api.whatsapp.com/send?phone=51902862400&text=¡Hola!%20Deseo%20hacer%20un%20pedido."
               target="_blank"
               rel="noopener noreferrer"
-              className="mt-2 w-max bg-whatsapp-green hover:brightness-95 hover:text-white text-white px-4 py-2.5 rounded-lg text-xs font-bold uppercase tracking-wide flex items-center gap-2 shadow-md transition-all active:scale-95"
+              className="mt-1 w-max bg-whatsapp-green hover:brightness-95 hover:text-white text-white px-4 py-2 rounded-lg text-xs font-bold uppercase tracking-wide flex items-center gap-2 shadow-md transition-all active:scale-95"
             >
               <span className="material-symbols-outlined text-base">chat</span>
               Chatear Delivery
             </a>
+
+            {/* Peruvian Official Libro de Reclamaciones Badge (Indecopi standard) */}
+            <button
+              onClick={() => setIsLibroModalOpen(true)}
+              className="mt-3 text-left bg-white text-gray-900 border-2 border-amber-400 rounded-2xl p-3.5 flex items-center gap-3 transition-all cursor-pointer group shadow-lg hover:shadow-2xl hover:scale-[1.02] active:scale-[0.98]"
+              title="Libro de Reclamaciones Virtual - Ley N° 29571"
+            >
+              {/* Official Book Icon with Peru Flag Accent */}
+              <div className="relative w-12 h-12 rounded-xl bg-gradient-to-br from-red-600 via-white to-red-600 p-[2px] shadow-sm shrink-0 flex items-center justify-center">
+                <div className="w-full h-full bg-ocean-deep rounded-[10px] flex flex-col items-center justify-center text-center">
+                  <span className="material-symbols-outlined text-sunset-coral text-2xl leading-none">menu_book</span>
+                  <span className="text-[7px] font-black uppercase tracking-wider text-white mt-0.5">Libro</span>
+                </div>
+              </div>
+              <div className="flex-grow">
+                <div className="flex items-center gap-1.5">
+                  <span className="text-[11px] font-black uppercase tracking-tight text-ocean-deep block group-hover:text-sunset-coral transition-colors">
+                    Libro de Reclamaciones
+                  </span>
+                  <span className="bg-red-600 text-white font-black text-[8px] px-1.5 py-0.2 rounded uppercase">
+                    Virtual
+                  </span>
+                </div>
+                <span className="text-[9px] text-gray-600 font-bold block mt-0.5 leading-tight">
+                  Conforme a la Ley N° 29571
+                </span>
+                <span className="text-[8px] text-gray-500 font-medium block">
+                  RUC: 20601284915
+                </span>
+              </div>
+            </button>
           </div>
         </div>
 
         {/* copyright metadata */}
         <div className="border-t border-white/10 py-6 px-4 max-w-7xl mx-auto flex flex-col md:flex-row justify-between items-center gap-3 text-[11px] text-gray-400 font-semibold uppercase tracking-wider">
           <span>© 2024 Terminal Pesquero. Todos los derechos reservados. Sabor de altamar.</span>
-          <div className="flex items-center gap-4">
+          <div className="flex flex-wrap items-center gap-3">
+            <button
+              onClick={() => setIsLibroModalOpen(true)}
+              className="bg-white/10 hover:bg-white/20 px-3 py-1 rounded-full text-sunset-coral hover:text-white font-extrabold flex items-center gap-1.5 transition-colors cursor-pointer border border-white/20"
+            >
+              <span className="material-symbols-outlined text-[15px] text-sunset-coral">menu_book</span>
+              <span>Libro de Reclamaciones</span>
+            </button>
+            <span className="text-gray-600">|</span>
             <button
               onClick={() => setIsAdminModalOpen(true)}
               className="text-sunset-coral hover:text-white flex items-center gap-1 transition-colors cursor-pointer capitalize"
@@ -706,6 +812,18 @@ export default function App() {
         dishes={dishes}
         onUpdateDishes={handleUpdateDishes}
         onShowToast={showToast}
+        schedule={schedule}
+        onUpdateSchedule={handleUpdateSchedule}
+      />
+
+      {/* Official Virtual Complaints Book Modal (Indecopi Ley N° 29571) */}
+      <LibroReclamacionesModal
+        isOpen={isLibroModalOpen}
+        onClose={() => setIsLibroModalOpen(false)}
+        onShowToast={showToast}
+        onSuccessClaim={(claim) => {
+          showToast(`Hoja de Reclamación ${claim.id} registrada`, "success");
+        }}
       />
     </div>
   );

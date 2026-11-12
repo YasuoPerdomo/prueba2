@@ -11,15 +11,17 @@ interface BranchModalProps {
 
 export default function BranchModal({ isOpen, onSelect, onClose, currentSede }: BranchModalProps) {
   const [selectedId, setSelectedId] = useState<string>(currentSede?.id || "");
+  const [errorMsg, setErrorMsg] = useState("");
 
   if (!isOpen) return null;
 
   const handleConfirm = () => {
     const chosen = SEDES.find(s => s.id === selectedId);
     if (!chosen) {
-      alert("Ya pe causa, elige una sede 😅");
+      setErrorMsg("¡Elige una sede para comenzar tu pedido! 🐟");
       return;
     }
+    setErrorMsg("");
     onSelect(chosen);
   };
 
@@ -85,6 +87,12 @@ export default function BranchModal({ isOpen, onSelect, onClose, currentSede }: 
 
           {/* Action buttons */}
           <div className="flex flex-col gap-2">
+            {errorMsg && (
+              <div className="bg-red-50 text-red-700 border border-red-200 px-3 py-2 rounded-xl text-xs font-bold text-center animate-fade-in flex items-center justify-center gap-1.5">
+                <span className="material-symbols-outlined text-sm">warning</span>
+                <span>{errorMsg}</span>
+              </div>
+            )}
             <button
               onClick={handleConfirm}
               type="button"

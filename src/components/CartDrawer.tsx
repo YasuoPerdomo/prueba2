@@ -99,6 +99,7 @@ export default function CartDrawer({
       return "";
     }
   });
+  const [errorMessage, setErrorMessage] = useState("");
 
   // Track customer local details to automatically populate future visits smoothly
   useEffect(() => {
@@ -164,19 +165,21 @@ export default function CartDrawer({
 
   const handleSendOrder = () => {
     if (!sede) {
-      alert("Error: Primero elige tu sede.");
+      setErrorMessage("Por favor, primero elige tu sede de despacho.");
       return;
     }
 
     if (!customerName.trim() || !customerAddress.trim()) {
-      alert("Por favor, ingresa tu Nombre y Dirección de Entrega antes de enviar.");
+      setErrorMessage("Por favor ingresa tu Nombre y Dirección de Entrega antes de enviar.");
       return;
     }
 
     if (cart.length === 0) {
-      alert("Tu carrito está vacío. ¡Agrega un cevichazo u otro plato delicioso!");
+      setErrorMessage("Tu carrito está vacío. ¡Agrega un plato desde la carta!");
       return;
     }
+
+    setErrorMessage("");
 
     // Compose custom, clean, stylized message that delights the owners
     let message = `*NUEVO PEDIDO - TERMINAL PESQUERO* 🌊🐟\n\n`;
@@ -194,6 +197,39 @@ export default function CartDrawer({
     message += `------------------------------------------\n`;
     message += `💰 *TOTAL A PAGAR: S/ ${totalPrice.toFixed(2)}*\n\n`;
     message += `¡Hola! Acabo de armar mi pedido desde la web para la sede *${sede.suffix}*. Quedo atento a la confirmación de cocina para el delivery. ¡Gracias! 🚀`;
+
+    // Save order record to local storage history for admin analytics
+    try {
+      const now = new Date();
+      const weekLabel = `Sem ${Math.ceil(now.getDate() / 7)} (${now.toLocaleString('es-PE', { month: 'short' })})`;
+      const dateLabel = now.toLocaleDateString('es-PE', { day: '2-digit', month: 'short', year: 'numeric' });
+      
+      const newOrder = {
+        id: `PED-${Date.now().toString(36).toUpperCase()}`,
+        createdAt: now.toISOString(),
+        dateLabel,
+        weekLabel,
+        customerName: customerName.trim(),
+        customerAddress: customerAddress.trim(),
+        sedeName: sede.name,
+        items: cart.map(i => ({
+          dishId: i.dish.id,
+          dishName: i.dish.name,
+          category: i.dish.category,
+          price: i.dish.price,
+          quantity: i.quantity,
+          spicyLevel: i.spicyLevel,
+        })),
+        totalAmount: totalPrice,
+        status: "enviado" as const,
+      };
+
+      const existingRaw = localStorage.getItem("tp_order_history");
+      const existingList = existingRaw ? JSON.parse(existingRaw) : [];
+      localStorage.setItem("tp_order_history", JSON.stringify([newOrder, ...existingList]));
+    } catch (e) {
+      console.error("Error saving order to tp_order_history", e);
+    }
 
     const encodedText = encodeURIComponent(message);
     const targetUrl = `https://api.whatsapp.com/send?phone=${sede.phone}&text=${encodedText}`;
@@ -496,6 +532,13 @@ export default function CartDrawer({
                         S/ {totalPrice.toFixed(2)}
                       </span>
                     </div>
+
+                    {errorMessage && (
+                      <div className="bg-red-50 text-red-700 border border-red-200 px-3 py-2 rounded-xl text-xs font-bold text-center animate-fade-in flex items-center justify-center gap-1.5">
+                        <span className="material-symbols-outlined text-sm">warning</span>
+                        <span>{errorMessage}</span>
+                      </div>
+                    )}
 
                     <button
                       onClick={handleSendOrder}
